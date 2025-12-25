@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+backend/app.db
+backend/uniquest.db
+
+# Node.js
+node_modules/
+npm-debug.log
+bun.lockb
+.DS_Store
+
+# Frontend build
+frontend/dist/
+frontend/coverage/
+
+# Editor
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

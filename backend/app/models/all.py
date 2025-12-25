@@ -1,0 +1,75 @@
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum, Boolean
+from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
+import enum
+from ..database import Base
+
+class TaskType(str, enum.Enum):
+    LECTURE = "lecture"
+    ASSIGNMENT = "assignment"
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, index=True)
+    student_id = Column(String, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    submissions = relationship("Submission", back_populates="user")
+    room_memberships = relationship("RoomMember", back_populates="user")
+
+class Room(Base):
+    __tablename__ = "rooms"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String)
+    code = Column(String, unique=True, index=True)
+    admin_id = Column(Integer, ForeignKey("users.id"))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    admin = relationship("User")
+    members = relationship("RoomMember", back_populates="room")
+    tasks = relationship("Task", back_populates="room")
+
+class RoomMember(Base):
+    __tablename__ = "room_members"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    room_id = Column(Integer, ForeignKey("rooms.id"))
+    is_admin = Column(Boolean, default=False)
+    joined_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    user = relationship("User", back_populates="room_memberships")
+    room = relationship("Room", back_populates="members")
+
+class Task(Base):
+    __tablename__ = "tasks"
+
+    id = Column(Integer, primary_key=True, index=True)
+    room_id = Column(Integer, ForeignKey("rooms.id"))
+    type = Column(String) # "lecture" or "assignment"
+    title = Column(String)
+    description = Column(String, nullable=True)
+    deadline = Column(DateTime(timezone=True), nullable=True) # For assignments
+    start_time = Column(DateTime(timezone=True), nullable=True) # For lectures
+    end_time = Column(DateTime(timezone=True), nullable=True) # For lectures
+    xp_value = Column(Integer)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    room = relationship("Room", back_populates="tasks")
+    submissions = relationship("Submission", back_populates="task")
+
+class Submission(Base):
+    __tablename__ = "submissions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    task_id = Column(Integer, ForeignKey("tasks.id"))
+    user_id = Column(Integer, ForeignKey("users.id"))
+    file_path = Column(String)
+    timestamp = Column(DateTime(timezone=True), server_default=func.now())
+    xp_awarded = Column(Integer)
+
+    task = relationship("Task", back_populates="submissions")
+    user = relationship("User", back_populates="submissions")
