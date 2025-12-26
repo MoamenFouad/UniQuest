@@ -26,7 +26,7 @@ async def submit_task(
     # Check if already submitted
     existing = db.query(Submission).filter(Submission.task_id == task_id, Submission.user_id == user.id).first()
     if existing:
-        raise HTTPException(status_code=400, detail="Already submitted")
+        raise HTTPException(status_code=409, detail="Already submitted")
 
     # Save file
     filename = f"{uuid.uuid4()}_{file.filename}"

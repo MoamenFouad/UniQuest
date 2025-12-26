@@ -100,15 +100,24 @@ export function RoomDetails() {
         }
     }
 
-    const getDeadlineStatus = (deadlineStr) => {
+    // Fix: Ensure deadline is treated as UTC
+    const parseDeadline = (deadlineStr) => {
         if (!deadlineStr) return null
-        const deadline = new Date(deadlineStr)
+        // If it doesn't end in Z, assume it's UTC and append Z
+        const iso = deadlineStr.endsWith("Z") ? deadlineStr : `${deadlineStr}Z`
+        return new Date(iso)
+    }
+
+    const getDeadlineStatus = (deadlineStr) => {
+        const deadline = parseDeadline(deadlineStr)
+        if (!deadline) return null
+
         const now = new Date()
         const diffHours = (deadline - now) / (1000 * 60 * 60)
 
         if (diffHours < 0) return { label: "Overdue", color: "text-red-500", bg: "bg-red-500/10" }
         if (diffHours < 24) return { label: "Due Soon", color: "text-amber-500", bg: "bg-amber-500/10" }
-        return { label: new Date(deadlineStr).toLocaleDateString(), color: "text-slate-400", bg: "bg-slate-800" }
+        return { label: deadline.toLocaleDateString(), color: "text-slate-400", bg: "bg-slate-800" }
     }
 
     const handleUpload = async (taskId, file) => {
@@ -122,7 +131,11 @@ export function RoomDetails() {
                 headers: { "Content-Type": "multipart/form-data" }
             })
             alert("Quest Completed! XP Awarded.")
-            fetchData() // Refresh logic
+
+            // Fix: Update local state instead of full refetch
+            setTasks(prev => prev.map(t =>
+                t.id === taskId ? { ...t, completed: true } : t
+            ))
         } catch (err) {
             alert(err.response?.data?.detail || "Upload failed")
         } finally {
@@ -213,6 +226,8 @@ export function RoomDetails() {
                     <div className="grid gap-4">
                         {tasks.map((task) => {
                             const status = getDeadlineStatus(task.deadline)
+                            const deadlineDate = parseDeadline(task.deadline)
+                            const isExpired = deadlineDate && deadlineDate < new Date()
 
                             return (
                                 <Card key={task.id} className="flex flex-col md:flex-row md:items-center justify-between p-6 gap-6 hover:border-slate-600 transition-colors group">
@@ -244,7 +259,7 @@ export function RoomDetails() {
                                             <h3 className="font-bold text-white text-xl mb-1 group-hover:text-primary transition-colors">{task.title}</h3>
                                             {task.deadline && (
                                                 <p className="text-sm text-slate-400">
-                                                    Due: {new Date(task.deadline).toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                                    Due: {parseDeadline(task.deadline).toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                                                 </p>
                                             )}
                                         </div>
@@ -257,26 +272,41 @@ export function RoomDetails() {
                                         </div>
 
                                         <div className="relative">
-                                            <input
-                                                type="file"
-                                                id={`file-${task.id}`}
-                                                className="hidden"
-                                                onChange={(e) => handleUpload(task.id, e.target.files[0])}
-                                                disabled={uploading === task.id}
-                                            />
-                                            <label
-                                                htmlFor={`file-${task.id}`}
-                                                className="cursor-pointer bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
-                                            >
-                                                {uploading === task.id ? (
-                                                    <span>Uploading...</span>
-                                                ) : (
-                                                    <>
-                                                        <Upload size={18} />
-                                                        <span>Submit Proof</span>
-                                                    </>
-                                                )}
-                                            </label>
+                                            {!isExpired && !task.completed && (
+                                                <input
+                                                    type="file"
+                                                    id={`file-${task.id}`}
+                                                    className="hidden"
+                                                    onChange={(e) => handleUpload(task.id, e.target.files[0])}
+                                                    disabled={uploading === task.id}
+                                                />
+                                            )}
+
+                                            {task.completed ? (
+                                                <div className="bg-green-500/20 text-green-400 px-4 py-2 rounded-lg flex items-center gap-2">
+                                                    <CheckCircle size={18} />
+                                                    <span>Completed</span>
+                                                </div>
+                                            ) : isExpired ? (
+                                                <div className="bg-slate-800 text-slate-500 px-4 py-2 rounded-lg flex items-center gap-2 cursor-not-allowed">
+                                                    <Calendar size={18} />
+                                                    <span>Expired</span>
+                                                </div>
+                                            ) : (
+                                                <label
+                                                    htmlFor={`file-${task.id}`}
+                                                    className="cursor-pointer bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                                                >
+                                                    {uploading === task.id ? (
+                                                        <span>Uploading...</span>
+                                                    ) : (
+                                                        <>
+                                                            <Upload size={18} />
+                                                            <span>Submit Proof</span>
+                                                        </>
+                                                    )}
+                                                </label>
+                                            )}
                                         </div>
                                     </div>
                                 </Card>

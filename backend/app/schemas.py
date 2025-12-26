@@ -50,6 +50,9 @@ class TaskResponse(TaskBase):
     start_time: Optional[datetime]
     end_time: Optional[datetime]
     created_at: datetime
+    is_submitted: bool = False
+    is_expired: bool = False
+    completed: bool = False # Frontend compatibility alias
 
     class Config:
         from_attributes = True
