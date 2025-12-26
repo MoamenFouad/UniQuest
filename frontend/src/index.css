@@ -4,6 +4,41 @@
 
 @layer base {
   body {
-    @apply bg-dark text-white font-sans antialiased;
+    @apply bg-dark text-slate-100 font-sans antialiased;
+    /* Pure black background */
+    background-color: #000000;
+  }
+
+  ::selection {
+    background-color: rgba(99, 102, 241, 0.3);
+    color: theme('colors.primary.light');
+  }
+
+  /* Slim Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-dark;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-slate-700 rounded-full hover:bg-slate-600 transition-colors;
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-white/5 backdrop-blur-md border border-white/10;
+  }
+
+  .glass-card {
+    @apply bg-card backdrop-blur-lg border border-white/5 shadow-xl;
+  }
+
+  .text-glow {
+    text-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
   }
 }
