@@ -4,7 +4,7 @@ import api from "../api"
 import { Card } from "../components/ui/Card"
 import { Button } from "../components/ui/Button"
 import { Input } from "../components/ui/Input"
-import { Plus, Users, ArrowRight } from "lucide-react"
+import { Plus, Users, ArrowRight, Archive } from "lucide-react"
 
 export function Rooms() {
     const [rooms, setRooms] = useState([])
@@ -36,7 +36,8 @@ export function Rooms() {
             setShowCreate(false)
             fetchRooms()
         } catch (err) {
-            alert("Failed to create room")
+            console.error(err)
+            alert(err.response?.data?.detail || "Failed to create room")
         }
     }
 
@@ -94,8 +95,9 @@ export function Rooms() {
                 </Card>
             )}
 
+            {/* Active Rooms */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {rooms.map((room) => (
+                {rooms.filter(r => !r.is_archived).map((room) => (
                     <Link key={room.id} to={`/rooms/${room.code}`}>
                         <Card className="h-full hover:border-primary transition-colors cursor-pointer group">
                             <div className="flex justify-between items-start mb-4">
@@ -112,6 +114,34 @@ export function Rooms() {
                     </Link>
                 ))}
             </div>
+
+            {/* Archived Rooms Section */}
+            {rooms.filter(r => r.is_archived).length > 0 && (
+                <div className="mt-12 pt-8 border-t border-slate-800">
+                    <h2 className="text-xl font-bold text-slate-400 mb-6 flex items-center gap-2">
+                        <Archive size={20} />
+                        Archived Rooms
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 opacity-60 hover:opacity-100 transition-opacity">
+                        {rooms.filter(r => r.is_archived).map((room) => (
+                            <Link key={room.id} to={`/rooms/${room.code}`}>
+                                <Card className="h-full border-slate-800 bg-slate-900/50 hover:bg-slate-900 transition-colors cursor-pointer group">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div className="p-3 bg-slate-800 rounded-xl text-slate-500">
+                                            <Archive size={24} />
+                                        </div>
+                                        <span className="text-xs font-mono bg-slate-900 px-2 py-1 rounded text-slate-600">
+                                            {room.code}
+                                        </span>
+                                    </div>
+                                    <h3 className="text-xl font-bold text-slate-300 mb-2">{room.name}</h3>
+                                    <p className="text-slate-500 text-sm">Archived</p>
+                                </Card>
+                            </Link>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {rooms.length === 0 && (
                 <div className="text-center py-20 text-slate-500">

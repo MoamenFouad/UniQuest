@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session
+from typing import List
 from datetime import datetime
 import shutil
 import os
@@ -47,3 +48,12 @@ async def submit_task(
     db.refresh(submission)
     
     return submission
+
+@router.get("/my", response_model=List[SubmissionResponse])
+async def get_my_submissions(
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get all submissions for the current user"""
+    submissions = db.query(Submission).filter(Submission.user_id == user.id).all()
+    return submissions

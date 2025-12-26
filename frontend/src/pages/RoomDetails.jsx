@@ -1,21 +1,24 @@
 import { useState, useEffect } from "react"
-import { useParams } from "react-router-dom"
+import { useParams, useNavigate } from "react-router-dom"
 import api from "../api"
 import { useAuth } from "../context/AuthContext"
 import { Card } from "../components/ui/Card"
 import { Button } from "../components/ui/Button"
 import { Input } from "../components/ui/Input"
-import { Trophy, Calendar, Upload, CheckCircle } from "lucide-react"
+import { Trophy, Calendar, Upload, CheckCircle, Share2, Copy, LogOut, Archive } from "lucide-react"
 import { clsx } from "clsx"
 
 export function RoomDetails() {
     const { code } = useParams()
     const { user, loading } = useAuth()
+    const navigate = useNavigate()
     const [room, setRoom] = useState(null)
     const [tasks, setTasks] = useState([])
     const [leaderboard, setLeaderboard] = useState([])
     const [activeTab, setActiveTab] = useState("tasks")
     const [isAdmin, setIsAdmin] = useState(false)
+    const [mySubmissions, setMySubmissions] = useState([]) // Track completed quests
+    const [copied, setCopied] = useState(false)
 
     // Admin form
     const [newTask, setNewTask] = useState({ title: "", type: "lecture", xp_value: 100, deadline: "" })
@@ -29,8 +32,6 @@ export function RoomDetails() {
 
     useEffect(() => {
         if (room && user) {
-            // Strict role determination: user is admin based on room ownership.
-            // Using loose equality (==) to handle potential string/number mismatches safely.
             const isCreator = room.admin_id == user.id
             setIsAdmin(isCreator)
         }
@@ -41,10 +42,22 @@ export function RoomDetails() {
             // Fetch room details first to establish context
             const roomRes = await api.get(`/rooms/${code}`)
             setRoom(roomRes.data)
+            console.log("Room data:", roomRes.data)
+
+            // Fetch user's submissions to track completed quests
+            try {
+                const submissionsRes = await api.get('/submissions/my')
+                console.log("My submissions:", submissionsRes.data)
+                setMySubmissions(submissionsRes.data || [])
+            } catch (e) {
+                console.warn("Failed to load submissions", e)
+                setMySubmissions([])
+            }
 
             // Then fetch other data independently so one failure doesn't block the room load
             try {
                 const tasksRes = await api.get(`/rooms/${code}/tasks`)
+                console.log("Tasks fetched:", tasksRes.data)
                 setTasks(tasksRes.data || [])
             } catch (e) {
                 console.warn("Failed to load tasks", e)
@@ -130,30 +143,131 @@ export function RoomDetails() {
         }
     }
 
+    const handleCopyCode = () => {
+        navigator.clipboard.writeText(code)
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
+    }
+
+    const handleShareRoom = () => {
+        const shareUrl = `${window.location.origin}/rooms/${code}`
+        if (navigator.share) {
+            navigator.share({
+                title: `Join ${room?.name || 'Room'} on UniQuest`,
+                text: `Join my study room with code: ${code}`,
+                url: shareUrl
+            })
+        } else {
+            navigator.clipboard.writeText(shareUrl)
+            alert("Room link copied to clipboard!")
+        }
+    }
+
+    const handleLeaveRoom = async () => {
+        if (!confirm("Are you sure you want to leave this room?")) return
+
+        try {
+            await api.post(`/rooms/${code}/leave`)
+            alert("Left room successfully")
+            navigate("/rooms")
+        } catch (err) {
+            alert(err.response?.data?.detail || "Failed to leave room")
+        }
+    }
+
+    const handleArchiveRoom = async () => {
+        try {
+            if (room?.is_archived) {
+                await api.post(`/rooms/${code}/unarchive`)
+                alert("Room unarchived successfully")
+            } else {
+                await api.post(`/rooms/${code}/archive`)
+                alert("Room archived successfully")
+            }
+            fetchData() // Refresh to update button state
+        } catch (err) {
+            alert(err.response?.data?.detail || "Failed to update archive status")
+        }
+    }
+
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <h1 className="text-3xl font-bold text-white">Room {code}</h1>
-                <div className="flex bg-card p-1 rounded-xl">
-                    <button
-                        onClick={() => setActiveTab("tasks")}
-                        className={clsx(
-                            "px-4 py-2 rounded-lg font-medium transition-colors",
-                            activeTab === "tasks" ? "bg-primary text-white" : "text-slate-400 hover:text-white"
-                        )}
-                    >
-                        Quests
-                    </button>
-                    <button
-                        onClick={() => setActiveTab("leaderboard")}
-                        className={clsx(
-                            "px-4 py-2 rounded-lg font-medium transition-colors",
-                            activeTab === "leaderboard" ? "bg-primary text-white" : "text-slate-400 hover:text-white"
-                        )}
-                    >
-                        Leaderboard
-                    </button>
+            {/* Room Header with Actions */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-3xl font-bold text-white mb-2">{room?.name || `Room ${code}`}</h1>
+                    <div className="flex items-center gap-2">
+                        <span className="text-slate-400 text-sm">Room Code:</span>
+                        <code className="bg-card px-3 py-1 rounded-lg text-primary-light font-mono text-sm border border-white/10">
+                            {code}
+                        </code>
+                        <button
+                            onClick={handleCopyCode}
+                            className="p-2 hover:bg-white/5 rounded-lg transition-colors text-slate-400 hover:text-white"
+                            title="Copy room code"
+                        >
+                            {copied ? <CheckCircle size={18} className="text-green-400" /> : <Copy size={18} />}
+                        </button>
+                    </div>
                 </div>
+
+                <div className="flex items-center gap-2">
+                    {isAdmin && (
+                        <Button
+                            onClick={handleShareRoom}
+                            variant="outline"
+                            className="flex items-center gap-2"
+                        >
+                            <Share2 size={18} />
+                            Share Room
+                        </Button>
+                    )}
+                    <Button
+                        onClick={handleArchiveRoom}
+                        variant="outline"
+                        className={clsx(
+                            "flex items-center gap-2",
+                            room?.is_archived
+                                ? "border-green-500/30 hover:bg-green-500/10 text-green-400"
+                                : "border-yellow-500/30 hover:bg-yellow-500/10 text-yellow-400"
+                        )}
+                    >
+                        <Archive size={18} />
+                        {room?.is_archived ? "Unarchive" : "Archive"}
+                    </Button>
+                    {!isAdmin && (
+                        <Button
+                            onClick={handleLeaveRoom}
+                            variant="outline"
+                            className="flex items-center gap-2 border-red-500/30 hover:bg-red-500/10 text-red-400"
+                        >
+                            <LogOut size={18} />
+                            Leave Room
+                        </Button>
+                    )}
+                </div>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex bg-card p-1 rounded-xl w-fit">
+                <button
+                    onClick={() => setActiveTab("tasks")}
+                    className={clsx(
+                        "px-4 py-2 rounded-lg font-medium transition-colors",
+                        activeTab === "tasks" ? "bg-primary text-white" : "text-slate-400 hover:text-white"
+                    )}
+                >
+                    Quests
+                </button>
+                <button
+                    onClick={() => setActiveTab("leaderboard")}
+                    className={clsx(
+                        "px-4 py-2 rounded-lg font-medium transition-colors",
+                        activeTab === "leaderboard" ? "bg-primary text-white" : "text-slate-400 hover:text-white"
+                    )}
+                >
+                    Leaderboard
+                </button>
             </div>
 
             {activeTab === "tasks" ? (
@@ -213,18 +327,29 @@ export function RoomDetails() {
                     <div className="grid gap-4">
                         {tasks.map((task) => {
                             const status = getDeadlineStatus(task.deadline)
+                            // Check if user has already submitted this quest
+                            const isCompleted = mySubmissions.some(sub => sub.task_id === task.id)
 
                             return (
-                                <Card key={task.id} className="flex flex-col md:flex-row md:items-center justify-between p-6 gap-6 hover:border-slate-600 transition-colors group">
+                                <Card key={task.id} className={clsx(
+                                    "flex flex-col md:flex-row md:items-center justify-between p-6 gap-6 transition-colors group",
+                                    isCompleted ? "border-green-500/30 bg-green-500/5" : "hover:border-slate-600"
+                                )}>
                                     <div className="flex items-start gap-4">
                                         <div className={clsx(
                                             "p-3 rounded-xl shrink-0 mt-1",
-                                            task.type === 'lecture' ? "bg-blue-500/10 text-blue-400" : "bg-red-500/10 text-red-400"
+                                            isCompleted ? "bg-green-500/20 text-green-400" :
+                                                task.type === 'lecture' ? "bg-blue-500/10 text-blue-400" : "bg-red-500/10 text-red-400"
                                         )}>
-                                            <Calendar size={24} />
+                                            {isCompleted ? <CheckCircle size={24} /> : <Calendar size={24} />}
                                         </div>
                                         <div>
                                             <div className="flex items-center gap-3 mb-1">
+                                                {isCompleted && (
+                                                    <span className="text-xs font-bold px-2 py-0.5 rounded-full uppercase tracking-wider bg-green-500/20 text-green-400">
+                                                        ✓ COMPLETED
+                                                    </span>
+                                                )}
                                                 <span className={clsx(
                                                     "text-xs font-bold px-2 py-0.5 rounded-full uppercase tracking-wider",
                                                     task.type === 'lecture' ? "bg-blue-500/10 text-blue-400" : "bg-red-500/10 text-red-400"
@@ -241,7 +366,10 @@ export function RoomDetails() {
                                                     </span>
                                                 )}
                                             </div>
-                                            <h3 className="font-bold text-white text-xl mb-1 group-hover:text-primary transition-colors">{task.title}</h3>
+                                            <h3 className={clsx(
+                                                "font-bold text-xl mb-1 transition-colors",
+                                                isCompleted ? "text-green-400" : "text-white group-hover:text-primary"
+                                            )}>{task.title}</h3>
                                             {task.deadline && (
                                                 <p className="text-sm text-slate-400">
                                                     Due: {new Date(task.deadline).toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
@@ -252,31 +380,43 @@ export function RoomDetails() {
 
                                     <div className="flex items-center gap-4">
                                         <div className="text-right hidden md:block">
-                                            <p className="font-bold text-yellow-400">{task.xp_value} XP</p>
-                                            <p className="text-xs text-slate-500">REWARD</p>
+                                            <p className={clsx(
+                                                "font-bold",
+                                                isCompleted ? "text-green-400" : "text-yellow-400"
+                                            )}>{task.xp_value} XP</p>
+                                            <p className="text-xs text-slate-500">{isCompleted ? "EARNED" : "REWARD"}</p>
                                         </div>
 
                                         <div className="relative">
-                                            <input
-                                                type="file"
-                                                id={`file-${task.id}`}
-                                                className="hidden"
-                                                onChange={(e) => handleUpload(task.id, e.target.files[0])}
-                                                disabled={uploading === task.id}
-                                            />
-                                            <label
-                                                htmlFor={`file-${task.id}`}
-                                                className="cursor-pointer bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
-                                            >
-                                                {uploading === task.id ? (
-                                                    <span>Uploading...</span>
-                                                ) : (
-                                                    <>
-                                                        <Upload size={18} />
-                                                        <span>Submit Proof</span>
-                                                    </>
-                                                )}
-                                            </label>
+                                            {isCompleted ? (
+                                                <div className="bg-green-500/20 text-green-400 px-4 py-2 rounded-lg flex items-center gap-2 border border-green-500/30">
+                                                    <CheckCircle size={18} />
+                                                    <span className="font-medium">Submitted</span>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <input
+                                                        type="file"
+                                                        id={`file-${task.id}`}
+                                                        className="hidden"
+                                                        onChange={(e) => handleUpload(task.id, e.target.files[0])}
+                                                        disabled={uploading === task.id}
+                                                    />
+                                                    <label
+                                                        htmlFor={`file-${task.id}`}
+                                                        className="cursor-pointer bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                                                    >
+                                                        {uploading === task.id ? (
+                                                            <span>Uploading...</span>
+                                                        ) : (
+                                                            <>
+                                                                <Upload size={18} />
+                                                                <span>Submit Proof</span>
+                                                            </>
+                                                        )}
+                                                    </label>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
                                 </Card>

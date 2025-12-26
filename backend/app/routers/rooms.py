@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List
 import uuid
 from ..database import get_db
-from ..models import Room, RoomMember, User, Submission
+from ..models import Room, RoomMember, User, Submission, Task
 from ..schemas import RoomCreate, RoomResponse, LeaderboardEntry
 from ..utils.auth import get_current_user
 from ..utils.game_logic import get_daily_multiplier
@@ -44,7 +44,17 @@ def join_room(code: str, user: User = Depends(get_current_user), db: Session = D
 
 @router.get("/my", response_model=List[RoomResponse])
 def get_my_rooms(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    return [member.room for member in user.room_memberships]
+    # Construct response manually to include archived status from the association table
+    rooms_data = []
+    for member in user.room_memberships:
+        room_data = member.room
+        # Create a dict-like object or modify the object if it's transient
+        # Safest way with Pydantic from_attributes is to ensure the attribute exists
+        # We can dynamically add it here
+        room_data.is_archived = member.archived
+        rooms_data.append(room_data)
+    
+    return rooms_data
 
 @router.get("/{code}/leaderboard", response_model=List[LeaderboardEntry])
 def get_leaderboard(code: str, db: Session = Depends(get_db)):
@@ -56,8 +66,17 @@ def get_leaderboard(code: str, db: Session = Depends(get_db)):
     leaderboard = []
     
     for member in members:
-        # Calculate XP
-        submissions = db.query(Submission).filter(Submission.user_id == member.id).order_by(Submission.timestamp).all()
+        # FIX: Only get submissions for tasks in THIS room, not all rooms
+        submissions = (
+            db.query(Submission)
+            .join(Task)
+            .filter(
+                Submission.user_id == member.id,
+                Task.room_id == room.id  # This is the critical fix!
+            )
+            .order_by(Submission.timestamp)
+            .all()
+        )
         
         # Group by day
         total_xp = 0
@@ -84,7 +103,6 @@ def get_leaderboard(code: str, db: Session = Depends(get_db)):
     for i, entry in enumerate(leaderboard):
         entry.rank = i + 1
         
-    return leaderboard
     return leaderboard
 
 @router.get("/global/leaderboard", response_model=List[LeaderboardEntry])
@@ -143,8 +161,81 @@ def get_global_leaderboard(db: Session = Depends(get_db)):
     return leaderboard
 
 @router.get("/{code}", response_model=RoomResponse)
-def get_room_details(code: str, db: Session = Depends(get_db)):
+def get_room_details(code: str, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     room = db.query(Room).filter(Room.code == code).first()
     if not room:
         raise HTTPException(status_code=404, detail="Room not found")
+        
+    # Check if user is a member to get archived status
+    member = db.query(RoomMember).filter(
+        RoomMember.user_id == user.id,
+        RoomMember.room_id == room.id
+    ).first()
+    
+    if member:
+        room.is_archived = member.archived
+    else:
+        room.is_archived = False
+        
     return room
+
+@router.post("/{code}/leave")
+def leave_room(code: str, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Leave a room"""
+    room = db.query(Room).filter(Room.code == code).first()
+    if not room:
+        raise HTTPException(status_code=404, detail="Room not found")
+    
+    # Check if user is admin
+    if room.admin_id == user.id:
+        raise HTTPException(status_code=400, detail="Admin cannot leave the room. Transfer ownership or delete the room instead.")
+    
+    member = db.query(RoomMember).filter(
+        RoomMember.user_id == user.id,
+        RoomMember.room_id == room.id
+    ).first()
+    
+    if not member:
+        raise HTTPException(status_code=404, detail="Not a member of this room")
+    
+    db.delete(member)
+    db.commit()
+    return {"message": "Left room successfully"}
+
+@router.post("/{code}/archive")
+def archive_room(code: str, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Archive a room for the current user"""
+    room = db.query(Room).filter(Room.code == code).first()
+    if not room:
+        raise HTTPException(status_code=404, detail="Room not found")
+    
+    member = db.query(RoomMember).filter(
+        RoomMember.user_id == user.id,
+        RoomMember.room_id == room.id
+    ).first()
+    
+    if not member:
+        raise HTTPException(status_code=404, detail="Not a member of this room")
+    
+    member.archived = True
+    db.commit()
+    return {"message": "Room archived successfully"}
+
+@router.post("/{code}/unarchive")
+def unarchive_room(code: str, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Unarchive a room for the current user"""
+    room = db.query(Room).filter(Room.code == code).first()
+    if not room:
+        raise HTTPException(status_code=404, detail="Room not found")
+    
+    member = db.query(RoomMember).filter(
+        RoomMember.user_id == user.id,
+        RoomMember.room_id == room.id
+    ).first()
+    
+    if not member:
+        raise HTTPException(status_code=404, detail="Not a member of this room")
+    
+    member.archived = False
+    db.commit()
+    return {"message": "Room unarchived successfully"}

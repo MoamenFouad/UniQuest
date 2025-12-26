@@ -27,6 +27,7 @@ class RoomResponse(RoomBase):
     id: int
     code: str
     admin_id: int
+    is_archived: bool = False
     created_at: datetime
 
     class Config:

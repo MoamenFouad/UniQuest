@@ -3,7 +3,7 @@ import os
 class Settings:
     PROJECT_NAME: str = "UniQuest"
     PROJECT_VERSION: str = "1.0.0"
-    DATABASE_URL: str = "sqlite:///./uniquest.db"
+    DATABASE_URL: str = "sqlite:///./uniquest_v2.db"
     UPLOAD_DIR: str = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "uploads")
 
 settings = Settings()
