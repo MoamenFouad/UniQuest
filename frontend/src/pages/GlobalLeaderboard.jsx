@@ -14,8 +14,11 @@ export function GlobalLeaderboard() {
 
     const fetchLeaderboard = async () => {
         try {
-            const { data } = await api.get("/rooms/global/leaderboard")
-            setLeaderboard(data)
+            const { data } = await api.get("/dashboard")
+            // Use top_adventurers from dashboard endpoint (returns full leaderboard with ranks)
+            setLeaderboard(data.top_adventurers || [])
+        } catch (error) {
+            console.error("Failed to fetch leaderboard", error)
         } finally {
             setLoading(false)
         }

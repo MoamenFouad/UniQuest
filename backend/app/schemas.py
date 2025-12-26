@@ -73,3 +73,29 @@ class LeaderboardEntry(BaseModel):
     username: str
     total_xp: int
     rank: int
+
+class ActivityEntry(BaseModel):
+    quest_title: str
+    room_name: str
+    xp_earned: int
+    timestamp: datetime
+
+class DailyXP(BaseModel):
+    date: str
+    xp: int
+
+class RoomXP(BaseModel):
+    room_id: int
+    room_name: str
+    room_code: str
+    xp: int
+
+class DashboardResponse(BaseModel):
+    total_xp: int
+    level: int
+    current_streak: int
+    quests_completed: int
+    xp_by_day: List[DailyXP]
+    xp_by_room: List[RoomXP]
+    recent_activities: List[ActivityEntry]
+    top_adventurers: List[LeaderboardEntry]

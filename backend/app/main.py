@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
-from .routers import auth, rooms, tasks, submissions
+from .routers import auth, rooms, tasks, submissions, dashboard
 from .database import engine, Base
 from .config import settings
 
@@ -26,6 +26,7 @@ app.include_router(auth.router)
 app.include_router(rooms.router)
 app.include_router(tasks.router)
 app.include_router(submissions.router)
+app.include_router(dashboard.router)
 
 # Static files
 app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")

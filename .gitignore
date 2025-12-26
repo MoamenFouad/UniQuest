@@ -6,6 +6,7 @@ venv/
 .env
 backend/app.db
 backend/uniquest.db
+backend/uploads/
 
 # Node.js
 node_modules/

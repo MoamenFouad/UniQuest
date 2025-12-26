@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import { useParams } from "react-router-dom"
 import api from "../api"
 import { useAuth } from "../context/AuthContext"
+import { useApp } from "../context/AppContext"
 import { Card } from "../components/ui/Card"
 import { Button } from "../components/ui/Button"
 import { Input } from "../components/ui/Input"
@@ -11,6 +12,7 @@ import { clsx } from "clsx"
 export function RoomDetails() {
     const { code } = useParams()
     const { user, loading } = useAuth()
+    const { refreshStats } = useApp()
     const [room, setRoom] = useState(null)
     const [tasks, setTasks] = useState([])
     const [leaderboard, setLeaderboard] = useState([])
@@ -136,6 +138,9 @@ export function RoomDetails() {
             setTasks(prev => prev.map(t =>
                 t.id === taskId ? { ...t, completed: true } : t
             ))
+
+            // Refresh global stats for dashboard update
+            refreshStats()
         } catch (err) {
             alert(err.response?.data?.detail || "Upload failed")
         } finally {
