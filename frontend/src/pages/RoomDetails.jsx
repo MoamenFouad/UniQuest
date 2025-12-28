@@ -1,29 +1,23 @@
 import { useState, useEffect } from "react"
-import { useParams } from "react-router-dom"
+import { useParams, Link } from "react-router-dom"
 import api from "../api"
 import { useAuth } from "../context/AuthContext"
 import { useApp } from "../context/AppContext"
-import { Card } from "../components/ui/Card"
-import { Button } from "../components/ui/Button"
-import { Input } from "../components/ui/Input"
-import { Trophy, Calendar, Upload, CheckCircle } from "lucide-react"
+import { Trophy, Calendar, Upload, CheckCircle, Zap, Shield, Plus, Target, ArrowRight, ChevronRight, Map } from "lucide-react"
 import { clsx } from "clsx"
 
 export function RoomDetails() {
     const { code } = useParams()
-    const { user, loading } = useAuth()
+    const { user } = useAuth()
     const { refreshStats } = useApp()
     const [room, setRoom] = useState(null)
     const [tasks, setTasks] = useState([])
     const [leaderboard, setLeaderboard] = useState([])
     const [activeTab, setActiveTab] = useState("tasks")
     const [isAdmin, setIsAdmin] = useState(false)
-
-    // Admin form
     const [newTask, setNewTask] = useState({ title: "", type: "lecture", xp_value: 100, deadline: "" })
-
-    // Upload state
     const [uploading, setUploading] = useState(null)
+    const [creating, setCreating] = useState(false)
 
     useEffect(() => {
         fetchData()
@@ -31,8 +25,6 @@ export function RoomDetails() {
 
     useEffect(() => {
         if (room && user) {
-            // Strict role determination: user is admin based on room ownership.
-            // Using loose equality (==) to handle potential string/number mismatches safely.
             const isCreator = room.admin_id == user.id
             setIsAdmin(isCreator)
         }
@@ -40,326 +32,208 @@ export function RoomDetails() {
 
     const fetchData = async () => {
         try {
-            // Fetch room details first to establish context
             const roomRes = await api.get(`/rooms/${code}`)
             setRoom(roomRes.data)
-
-            // Then fetch other data independently so one failure doesn't block the room load
             try {
                 const tasksRes = await api.get(`/rooms/${code}/tasks`)
                 setTasks(tasksRes.data || [])
-            } catch (e) {
-                console.warn("Failed to load tasks", e)
-                setTasks([])
-            }
-
+            } catch (e) { setTasks([]) }
             try {
                 const lbRes = await api.get(`/rooms/${code}/leaderboard`)
                 setLeaderboard(lbRes.data || [])
-            } catch (e) {
-                console.warn("Failed to load leaderboard", e)
-                setLeaderboard([])
-            }
-
-        } catch (error) {
-            console.error("Failed to fetch room details:", error);
-        }
+            } catch (e) { setLeaderboard([]) }
+        } catch (error) { console.error(error) }
     }
-
-    // Create state
-    const [creating, setCreating] = useState(false)
 
     const handleCreateTask = async (e) => {
         e.preventDefault()
         if (!newTask.title || !newTask.deadline) return
-
         setCreating(true)
         try {
-            // Safe date handling
             const deadlineDate = new Date(newTask.deadline)
-            if (isNaN(deadlineDate.getTime())) {
-                alert("Invalid deadline date")
-                setCreating(false)
-                return
-            }
-
-            const { data: createdTask } = await api.post(`/rooms/${code}/tasks/`, {
-                ...newTask,
-                deadline: deadlineDate.toISOString()
-            })
-
-            // Optimistic update: Add new task to list immediately
+            const { data: createdTask } = await api.post(`/rooms/${code}/tasks/`, { ...newTask, deadline: deadlineDate.toISOString() })
             setTasks(prev => [createdTask, ...prev])
-
-            // Reset form
             setNewTask({ title: "", type: "lecture", xp_value: 100, deadline: "" })
-
-        } catch (err) {
-            console.error(err)
-            alert(err.response?.data?.detail || "Failed to create task")
-        } finally {
-            setCreating(false)
-        }
+        } catch (err) { alert(err.response?.data?.detail || "Failed to create task") } finally { setCreating(false) }
     }
 
-    // Fix: Ensure deadline is treated as UTC
-    const parseDeadline = (deadlineStr) => {
-        if (!deadlineStr) return null
-        // If it doesn't end in Z, assume it's UTC and append Z
-        const iso = deadlineStr.endsWith("Z") ? deadlineStr : `${deadlineStr}Z`
-        return new Date(iso)
-    }
-
-    const getDeadlineStatus = (deadlineStr) => {
-        const deadline = parseDeadline(deadlineStr)
-        if (!deadline) return null
-
-        const now = new Date()
-        const diffHours = (deadline - now) / (1000 * 60 * 60)
-
-        if (diffHours < 0) return { label: "Overdue", color: "text-red-500", bg: "bg-red-500/10" }
-        if (diffHours < 24) return { label: "Due Soon", color: "text-amber-500", bg: "bg-amber-500/10" }
-        return { label: deadline.toLocaleDateString(), color: "text-slate-400", bg: "bg-slate-800" }
-    }
-
-    const handleUpload = async (taskId, file) => {
+    const handleFileUpload = async (taskId, file) => {
         if (!file) return
+        setUploading(taskId)
         const formData = new FormData()
         formData.append("file", file)
-
-        setUploading(taskId)
         try {
-            await api.post(`/submissions/${taskId}`, formData, {
-                headers: { "Content-Type": "multipart/form-data" }
-            })
-            alert("Quest Completed! XP Awarded.")
-
-            // Fix: Update local state instead of full refetch
-            setTasks(prev => prev.map(t =>
-                t.id === taskId ? { ...t, completed: true } : t
-            ))
-
-            // Refresh global stats for dashboard update
-            refreshStats()
-        } catch (err) {
-            alert(err.response?.data?.detail || "Upload failed")
-        } finally {
-            setUploading(null)
-        }
+            await api.post(`/rooms/${code}/tasks/${taskId}/submit/`, formData)
+            setTasks(prev => prev.map(t => t.id === taskId ? { ...t, is_submitted: true } : t))
+            await refreshStats()
+        } catch (err) { alert(err.response?.data?.detail || "Upload failed") } finally { setUploading(null) }
     }
 
+    if (!room) return (
+        <div className="flex flex-col items-center justify-center min-h-[60vh] gap-10 bg-black">
+            <div className="w-16 h-16 md:w-20 md:h-20 relative">
+                <div className="absolute inset-0 border-t-2 border-primary rounded-full animate-spin" />
+                <Zap className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-primary animate-pulse" size={24} />
+            </div>
+            <p className="text-primary font-black uppercase tracking-[0.6em] italic text-[10px]">Analyzing Sector Identity Matrix...</p>
+        </div>
+    )
+
     return (
-        <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <h1 className="text-3xl font-bold text-white">Room {code}</h1>
-                <div className="flex bg-card p-1 rounded-xl">
-                    <button
-                        onClick={() => setActiveTab("tasks")}
-                        className={clsx(
-                            "px-4 py-2 rounded-lg font-medium transition-colors",
-                            activeTab === "tasks" ? "bg-primary text-white" : "text-slate-400 hover:text-white"
-                        )}
-                    >
-                        Quests
-                    </button>
-                    <button
-                        onClick={() => setActiveTab("leaderboard")}
-                        className={clsx(
-                            "px-4 py-2 rounded-lg font-medium transition-colors",
-                            activeTab === "leaderboard" ? "bg-primary text-white" : "text-slate-400 hover:text-white"
-                        )}
-                    >
-                        Leaderboard
-                    </button>
+        <div className="space-y-24 md:space-y-32 bg-black pb-32 md:pb-48 relative overflow-hidden px-6 md:px-12">
+            {/* Studio Grid Background */}
+            <div className="absolute inset-0 grid-overlay opacity-[0.05] pointer-events-none" />
+
+            {/* Tactical Sector Hero */}
+            <header className="space-y-8 md:space-y-12 relative z-10">
+                <div className="flex items-center gap-4 md:gap-6">
+                    <div className="h-[2px] w-12 md:w-24 bg-secondary" />
+                    <span className="text-secondary font-black uppercase tracking-[0.4em] text-[10px] italic">Operational Sector_{room.code}</span>
                 </div>
+
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-12 md:gap-16">
+                    <div className="space-y-6">
+                        <h1 className="text-5xl md:text-8xl lg:text-[9rem] font-black text-white italic uppercase tracking-[calc(-0.06em)] leading-[0.9]">
+                            {room.name} <br />
+                            <span className="bg-clip-text text-transparent bg-gradient-to-r from-secondary to-white">{room.course_code}</span>
+                        </h1>
+                        <p className="text-white/40 text-xl md:text-3xl font-medium max-w-2xl italic leading-tight">
+                            Strategic Command Interface for professional technical execution within the Origin Sector.
+                        </p>
+                    </div>
+                    {isAdmin && (
+                        <div className="p-8 md:p-10 bg-primary text-white rounded-2xl md:rounded-[3rem] shadow-[0_0_50px_hsla(var(--primary),0.3)] hover-lift flex flex-col items-center gap-4 shrink-0">
+                            <Shield size={40} md:size={48} />
+                            <span className="text-[10px] font-black uppercase tracking-widest italic opacity-60">Admin Unit</span>
+                        </div>
+                    )}
+                </div>
+            </header>
+
+            {/* Tactical Navigation Bar */}
+            <div className="border-y border-white/5 flex relative z-10 bg-white/[0.01]">
+                {[
+                    { id: 'tasks', label: 'Operational Directives', icon: Target },
+                    { id: 'leaderboard', label: 'Sector Standings', icon: Trophy }
+                ].map((tab) => (
+                    <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={clsx(
+                            "flex-1 p-8 md:p-12 font-black uppercase text-[10px] md:text-xs italic tracking-[0.5em] transition-all flex items-center justify-center gap-4 md:gap-6 group relative overflow-hidden",
+                            activeTab === tab.id ? "bg-white text-black" : "text-white/40 hover:text-white"
+                        )}
+                    >
+                        {activeTab === tab.id && <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-secondary/10" />}
+                        <tab.icon size={20} md:size={24} className={clsx("relative z-10 transition-transform group-hover:scale-110", activeTab === tab.id ? "text-primary" : "text-white/20 group-hover:text-white")} />
+                        <span className="relative z-10">{tab.label}</span>
+                    </button>
+                ))}
             </div>
 
-            {activeTab === "tasks" ? (
-                <div className="space-y-6">
-                    {isAdmin && (
-                        <Card className="border border-primary/20 bg-primary/5">
-                            <div className="flex items-center gap-3 mb-6">
-                                <div className="p-2 bg-primary rounded-lg text-white">
-                                    <CheckCircle size={20} />
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 md:gap-24 relative z-10">
+                <div className="lg:col-span-8 space-y-4">
+                    {activeTab === 'tasks' ? (
+                        tasks.length > 0 ? tasks.map((task, idx) => (
+                            <div key={task.id} className="group flex flex-col md:flex-row items-stretch border border-white/5 bg-white/[0.02] p-8 md:p-16 transition-all duration-1000 hover:bg-white hover:text-black hover:border-transparent relative overflow-hidden">
+                                <div className="absolute inset-y-0 left-0 w-1 bg-primary scale-y-0 group-hover:scale-y-100 transition-transform duration-700" />
+
+                                <div className="flex-1 space-y-4 md:space-y-6">
+                                    <div className="flex items-center gap-4 md:gap-6 text-[9px] md:text-[10px] font-black uppercase tracking-[0.4em] opacity-40 group-hover:opacity-100 italic transition-all">
+                                        <span className="text-secondary group-hover:text-black">MISSION_{idx + 1}</span>
+                                        <div className="h-[1px] w-6 md:w-8 bg-current" />
+                                        <span>DIRECTIVE_{task.type}</span>
+                                        <div className="h-[1px] w-6 md:w-8 bg-current" />
+                                        <div className="flex items-center gap-2"><Calendar size={12} /> DL_{new Date(task.deadline).toLocaleDateString()}</div>
+                                    </div>
+                                    <h4 className="text-4xl md:text-5xl lg:text-6xl font-black italic uppercase tracking-tighter leading-none group-hover:translate-x-6 transition-all duration-700">{task.title}</h4>
                                 </div>
-                                <h3 className="font-bold text-white text-lg">Create New Quest</h3>
+
+                                <div className="flex items-center justify-end md:w-72 lg:w-80 mt-8 md:mt-0">
+                                    {task.is_submitted ? (
+                                        <div className="flex items-center gap-3 md:gap-4 font-black italic uppercase text-[11px] md:text-[12px] tracking-widest text-primary group-hover:text-black">
+                                            <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-primary/20 flex items-center justify-center group-hover:bg-black/10"><CheckCircle size={20} md:size={24} /></div>
+                                            Verified Deployment
+                                        </div>
+                                    ) : (
+                                        <label className="cursor-pointer group/label">
+                                            <input type="file" className="hidden" onChange={(e) => handleFileUpload(task.id, e.target.files[0])} disabled={uploading === task.id} />
+                                            <div className={clsx(
+                                                "px-8 md:px-12 py-4 md:py-6 border-2 border-primary/30 group-hover:border-black rounded-full font-black italic text-[9px] md:text-[10px] uppercase tracking-[0.4em] flex items-center gap-3 md:gap-4 hover:bg-black hover:text-white transition-all shadow-xl",
+                                                uploading === task.id && "animate-pulse opacity-50"
+                                            )}>
+                                                {uploading === task.id ? "Deploying Data_Sync" : "Initialize Solution"} <Upload size={16} md:size={18} />
+                                            </div>
+                                        </label>
+                                    )}
+                                </div>
                             </div>
-
-                            <form onSubmit={handleCreateTask} className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                                <div className="md:col-span-6 space-y-1">
-                                    <label className="text-xs font-medium text-slate-400 ml-1">Quest Title</label>
-                                    <Input
-                                        placeholder="e.g. Week 1: Introduction"
-                                        value={newTask.title}
-                                        onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
-                                        required
-                                    />
+                        )) : (
+                            <div className="p-16 md:p-32 text-center border-2 border-dashed border-white/5 bg-white/[0.01] rounded-[2rem] md:rounded-[4rem]">
+                                <Zap className="mx-auto mb-6 md:mb-8 text-white/10" size={48} md:size={64} />
+                                <p className="text-white/20 font-black italic uppercase tracking-[0.6em] text-lg md:text-xl">Sector Chamber Silent_No Directives Issued</p>
+                            </div>
+                        )
+                    ) : (
+                        <div className="space-y-2">
+                            {leaderboard.map((entry, idx) => (
+                                <div key={entry.user_id} className="flex items-center justify-between p-8 md:p-14 border border-white/5 bg-white/[0.02] group hover:bg-primary hover:text-white transition-all duration-700 relative overflow-hidden">
+                                    <div className="absolute inset-0 bg-gradient-to-r from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    <div className="flex items-center gap-8 md:gap-12 relative z-10">
+                                        <span className="text-3xl md:text-5xl font-black italic opacity-20 group-hover:opacity-100 group-hover:translate-x-4 transition-all">0{idx + 1}</span>
+                                        <div>
+                                            <p className="text-3xl md:text-5xl font-black italic uppercase tracking-tighter">{entry.username}</p>
+                                            <p className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-secondary group-hover:text-white/60 mt-2 italic">Specialized Tactical Rank</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right relative z-10">
+                                        <p className="text-3xl md:text-5xl font-black italic leading-none">{entry.total_xp}</p>
+                                        <p className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-white/20 group-hover:text-white/40 mt-3 italic">Operational XP</p>
+                                    </div>
                                 </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
 
-                                <div className="md:col-span-3 space-y-1">
-                                    <label className="text-xs font-medium text-slate-400 ml-1">Type</label>
-                                    <select
-                                        className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors"
-                                        value={newTask.type}
-                                        onChange={(e) => setNewTask({ ...newTask, type: e.target.value, xp_value: e.target.value === 'lecture' ? 100 : 75 })}
-                                    >
-                                        <option value="lecture">Lecture (100 XP)</option>
-                                        <option value="assignment">Assignment (75 XP)</option>
-                                    </select>
+                <aside className="lg:col-span-4 space-y-12 md:space-y-16">
+                    {isAdmin && (
+                        <div className="p-8 md:p-12 lg:p-16 border-2 border-primary/20 bg-primary/5 rounded-[3rem] md:rounded-[4rem] space-y-8 md:space-y-12 group hover:border-primary transition-all duration-700 neon-glow-primary relative overflow-hidden">
+                            <div className="absolute top-0 right-0 p-8 md:p-12 opacity-[0.05] pointer-events-none"><Zap size={150} /></div>
+                            <h3 className="text-3xl md:text-4xl font-black italic uppercase tracking-tighter relative z-10">Command <br /> <span className="text-primary">Directives.</span></h3>
+                            <form onSubmit={handleCreateTask} className="space-y-8 md:space-y-10 relative z-10">
+                                <div className="space-y-3">
+                                    <label className="text-[11px] font-black text-primary uppercase tracking-[0.5em] ml-2 italic">Operation Alias</label>
+                                    <input value={newTask.title} onChange={(e) => setNewTask({ ...newTask, title: e.target.value })} className="w-full bg-black/40 border border-white/10 p-5 md:p-6 rounded-2xl text-white font-black italic uppercase text-xs md:text-sm placeholder:text-white/10 focus:border-primary transition-all" placeholder="MISSION_CODE_NAME" />
                                 </div>
-
-                                <div className="md:col-span-3 space-y-1">
-                                    <label className="text-xs font-medium text-slate-400 ml-1">Deadline</label>
-                                    <Input
-                                        type="datetime-local"
-                                        value={newTask.deadline}
-                                        onChange={(e) => setNewTask({ ...newTask, deadline: e.target.value })}
-                                        required
-                                        className="text-white [color-scheme:dark]"
-                                    />
+                                <div className="space-y-3">
+                                    <label className="text-[11px] font-black text-primary uppercase tracking-[0.5em] ml-2 italic">Time Deadline</label>
+                                    <input type="datetime-local" value={newTask.deadline} onChange={(e) => setNewTask({ ...newTask, deadline: e.target.value })} className="w-full bg-black/40 border border-white/10 p-5 md:p-6 rounded-2xl text-white font-black italic uppercase text-xs md:text-sm focus:border-primary transition-all" />
                                 </div>
-
-                                <div className="md:col-span-12 flex justify-end mt-2">
-                                    <Button type="submit" className="w-full md:w-auto px-8" disabled={creating}>
-                                        {creating ? "Creating..." : "Create Quest"}
-                                    </Button>
-                                </div>
+                                <button type="submit" disabled={creating} className="w-full py-6 md:py-8 bg-primary text-white font-black uppercase text-[10px] md:text-xs tracking-[0.5em] italic rounded-full shadow-[0_0_40px_hsla(var(--primary),0.3)] hover:scale-105 active:scale-95 transition-all">
+                                    {creating ? "Initing_Deployment..." : "Deploy Mission"}
+                                </button>
                             </form>
-                        </Card>
+                        </div>
                     )}
 
-                    <div className="grid gap-4">
-                        {tasks.map((task) => {
-                            const status = getDeadlineStatus(task.deadline)
-                            const deadlineDate = parseDeadline(task.deadline)
-                            const isExpired = deadlineDate && deadlineDate < new Date()
-
-                            return (
-                                <Card key={task.id} className="flex flex-col md:flex-row md:items-center justify-between p-6 gap-6 hover:border-slate-600 transition-colors group">
-                                    <div className="flex items-start gap-4">
-                                        <div className={clsx(
-                                            "p-3 rounded-xl shrink-0 mt-1",
-                                            task.type === 'lecture' ? "bg-blue-500/10 text-blue-400" : "bg-red-500/10 text-red-400"
-                                        )}>
-                                            <Calendar size={24} />
-                                        </div>
-                                        <div>
-                                            <div className="flex items-center gap-3 mb-1">
-                                                <span className={clsx(
-                                                    "text-xs font-bold px-2 py-0.5 rounded-full uppercase tracking-wider",
-                                                    task.type === 'lecture' ? "bg-blue-500/10 text-blue-400" : "bg-red-500/10 text-red-400"
-                                                )}>
-                                                    {task.type}
-                                                </span>
-                                                {status && (
-                                                    <span className={clsx(
-                                                        "text-xs font-medium px-2 py-0.5 rounded-full flex items-center gap-1",
-                                                        status.bg, status.color
-                                                    )}>
-                                                        {status.label === 'Overdue' || status.label === 'Due Soon' ? '⚠️ ' : '🕒 '}
-                                                        {status.label}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <h3 className="font-bold text-white text-xl mb-1 group-hover:text-primary transition-colors">{task.title}</h3>
-                                            {task.deadline && (
-                                                <p className="text-sm text-slate-400">
-                                                    Due: {parseDeadline(task.deadline).toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                                                </p>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center gap-4">
-                                        <div className="text-right hidden md:block">
-                                            <p className="font-bold text-yellow-400">{task.xp_value} XP</p>
-                                            <p className="text-xs text-slate-500">REWARD</p>
-                                        </div>
-
-                                        <div className="relative">
-                                            {!isExpired && !task.completed && (
-                                                <input
-                                                    type="file"
-                                                    id={`file-${task.id}`}
-                                                    className="hidden"
-                                                    onChange={(e) => handleUpload(task.id, e.target.files[0])}
-                                                    disabled={uploading === task.id}
-                                                />
-                                            )}
-
-                                            {task.completed ? (
-                                                <div className="bg-green-500/20 text-green-400 px-4 py-2 rounded-lg flex items-center gap-2">
-                                                    <CheckCircle size={18} />
-                                                    <span>Completed</span>
-                                                </div>
-                                            ) : isExpired ? (
-                                                <div className="bg-slate-800 text-slate-500 px-4 py-2 rounded-lg flex items-center gap-2 cursor-not-allowed">
-                                                    <Calendar size={18} />
-                                                    <span>Expired</span>
-                                                </div>
-                                            ) : (
-                                                <label
-                                                    htmlFor={`file-${task.id}`}
-                                                    className="cursor-pointer bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
-                                                >
-                                                    {uploading === task.id ? (
-                                                        <span>Uploading...</span>
-                                                    ) : (
-                                                        <>
-                                                            <Upload size={18} />
-                                                            <span>Submit Proof</span>
-                                                        </>
-                                                    )}
-                                                </label>
-                                            )}
-                                        </div>
-                                    </div>
-                                </Card>
-                            )
-                        })}
-                        {tasks.length === 0 && (
-                            <div className="text-center py-10 text-slate-500">
-                                <p className="text-lg mb-2">Room is empty.</p>
-                                {isAdmin ? (
-                                    <p>Create your first lecture or assignment above.</p>
-                                ) : (
-                                    <p>No active quests to complete.</p>
-                                )}
+                    <div className="p-8 md:p-12 lg:p-16 bg-white/[0.01] border border-white/5 rounded-[3rem] md:rounded-[4rem] space-y-8 md:space-y-12 relative overflow-hidden group">
+                        <div className="absolute bottom-0 right-0 p-8 md:p-12 opacity-[0.03] pointer-events-none"><Map size={150} /></div>
+                        <h3 className="text-[11px] md:text-[12px] font-black uppercase tracking-[0.6em] text-secondary italic">Sector Dynamics</h3>
+                        <div className="space-y-8 md:space-y-10">
+                            <div className="flex justify-between border-b border-white/5 pb-4 md:pb-6">
+                                <span className="text-[9px] md:text-[10px] font-black uppercase text-white/20 italic tracking-widest">Operator Capacity</span>
+                                <span className="font-black italic text-lg md:text-xl">{leaderboard.length.toLocaleString()} Units</span>
                             </div>
-                        )}
+                            <div className="flex justify-between border-b border-white/5 pb-4 md:pb-6">
+                                <span className="text-[9px] md:text-[10px] font-black uppercase text-white/20 italic tracking-widest">Active Objectives</span>
+                                <span className="font-black italic text-lg md:text-xl">{tasks.length} Directives</span>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            ) : (
-                <Card>
-                    <table className="w-full text-left text-white">
-                        <thead className="text-slate-500 border-b border-slate-700">
-                            <tr>
-                                <th className="p-4">Rank</th>
-                                <th className="p-4">Adventurer</th>
-                                <th className="p-4 text-right">Total XP</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {leaderboard.map((entry) => (
-                                <tr key={entry.user_id} className="border-b border-slate-800 last:border-0 hover:bg-slate-800/50">
-                                    <td className="p-4">
-                                        <div className={clsx(
-                                            "w-8 h-8 rounded-full flex items-center justify-center font-bold",
-                                            entry.rank === 1 ? "bg-yellow-500/20 text-yellow-500" :
-                                                entry.rank === 2 ? "bg-slate-300/20 text-slate-300" :
-                                                    entry.rank === 3 ? "bg-amber-700/20 text-amber-700" : "text-slate-500"
-                                        )}>
-                                            #{entry.rank}
-                                        </div>
-                                    </td>
-                                    <td className="p-4 font-medium">{entry.username}</td>
-                                    <td className="p-4 text-right font-bold text-primary">{entry.total_xp} XP</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </Card>
-            )}
+                </aside>
+            </div>
         </div>
     )
 }
+

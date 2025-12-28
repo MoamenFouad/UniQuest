@@ -1,237 +1,259 @@
+import { useState, useEffect, useRef } from "react"
 import { Link } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
 import { useApp } from "../context/AppContext"
-import { Card } from "../components/ui/Card"
-import { Trophy, Flame, Target, ArrowRight, TrendingUp, Clock } from "lucide-react"
+import { Trophy, Flame, Target, ArrowRight, TrendingUp, Zap, ChevronRight, Map, Shield } from "lucide-react"
 import { clsx } from "clsx"
 
 export function Dashboard() {
     const { user } = useAuth()
-    const { stats, leaderboard, loading } = useApp()
+    const { stats, leaderboard } = useApp()
 
-    // Calculate level progress
     const currentLevelXp = (stats.level - 1) * 100
-    const nextLevelXp = stats.level * 100
     const progressInLevel = stats.xp - currentLevelXp
     const progressPercent = (progressInLevel / 100) * 100
-
-    const heroStats = [
-        {
-            label: "Total XP",
-            value: stats.xp.toLocaleString(),
-            icon: Trophy,
-            color: "text-yellow-400",
-            bg: "bg-yellow-400/10",
-            ring: "ring-yellow-400/20"
-        },
-        {
-            label: "Active Days",
-            value: stats.streak,
-            icon: Flame,
-            color: "text-orange-500",
-            bg: "bg-orange-500/10",
-            ring: "ring-orange-500/20"
-        },
-        {
-            label: "Quests Done",
-            value: stats.questsDone,
-            icon: Target,
-            color: "text-indigo-400",
-            bg: "bg-indigo-400/10",
-            ring: "ring-indigo-400/20"
-        },
-    ]
-
     const topLeaderboard = leaderboard.slice(0, 5)
 
+    const universityQuotes = [
+        "The only way to learn a new programming language is by writing programs in it. — Dennis Ritchie",
+        "Code is like humor. When you have to explain it, it’s bad. — Cory House",
+        "Excellence is not a skill. It is an attitude. — Ralph Marston",
+        "The best way to predict the future is to invent it. — Alan Kay",
+        "Knowledge is power. Information is liberating. Education is the premise of progress. — Kofi Annan",
+        "In theory, there is no difference between theory and practice. But, in practice, there is. — Jan L.A. van de Snepscheut"
+    ]
+
+    useEffect(() => {
+        if (window.gsap) {
+            const gsap = window.gsap
+            const ScrollTrigger = window.ScrollTrigger
+            gsap.registerPlugin(ScrollTrigger)
+
+            // Hero Cinematic Reveal
+            const tl = gsap.timeline()
+            tl.fromTo(".hero-title-part",
+                { opacity: 0, y: 150, skewY: 7 },
+                { opacity: 1, y: 0, skewY: 0, duration: 1.8, stagger: 0.15, ease: "expo.out" }
+            )
+            tl.fromTo(".hero-sub",
+                { opacity: 0, y: 20 },
+                { opacity: 1, y: 0, duration: 1, ease: "power2.out" }, "-=1"
+            )
+
+            // Section Scrollers
+            gsap.utils.toArray(".gsap-reveal").forEach((section) => {
+                gsap.fromTo(section,
+                    { opacity: 0, scale: 0.98, y: 40 },
+                    {
+                        opacity: 1,
+                        scale: 1,
+                        y: 0,
+                        duration: 1.4,
+                        ease: "power4.out",
+                        scrollTrigger: {
+                            trigger: section,
+                            start: "top 90%",
+                            toggleActions: "play none none none"
+                        }
+                    }
+                )
+            })
+
+            // Scroll indicator parallax
+            gsap.to(".scroll-indicator", {
+                y: -150,
+                opacity: 0,
+                scrollTrigger: {
+                    trigger: ".hero-section",
+                    start: "top top",
+                    end: "bottom center",
+                    scrub: 1
+                }
+            })
+        }
+    }, [])
+
     return (
-        <div className="space-y-8">
-            {/* Hero Section */}
-            <div>
-                <h1 className="text-4xl font-bold text-white mb-2">Welcome back, {user?.username}</h1>
-                <p className="text-slate-400 text-lg">Your adventure continues. Keep climbing!</p>
-            </div>
+        <div className="bg-black relative">
+            {/* Studio Grid Background */}
+            <div className="fixed inset-0 grid-overlay opacity-[0.03] pointer-events-none z-0" />
 
-            {/* Hero Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {heroStats.map((stat) => (
-                    <Card
-                        key={stat.label}
-                        className={clsx(
-                            "group relative overflow-hidden border-slate-800/50 hover:border-slate-700 transition-all duration-300 hover:scale-[1.02]",
-                            loading && "animate-pulse"
-                        )}
-                    >
-                        <div className="absolute inset-0 bg-gradient-to-br from-slate-800/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <div className="relative p-6 flex items-center gap-6">
-                            <div className={clsx(
-                                "p-5 rounded-2xl ring-2",
-                                stat.bg,
-                                stat.color,
-                                stat.ring
-                            )}>
-                                <stat.icon size={32} strokeWidth={2} />
-                            </div>
-                            <div className="flex-1">
-                                <p className="text-slate-500 text-sm font-medium uppercase tracking-wider mb-1">
-                                    {stat.label}
-                                </p>
-                                {loading ? (
-                                    <div className="h-10 w-24 bg-slate-800 rounded-lg" />
-                                ) : (
-                                    <p className="text-4xl font-bold text-white tracking-tight">
-                                        {stat.value}
-                                    </p>
-                                )}
-                            </div>
-                        </div>
-                    </Card>
-                ))}
-            </div>
+            {/* 1. Epic Hero Section */}
+            <section className="hero-section relative min-h-screen flex flex-col items-center justify-center p-8 overflow-hidden z-[10]">
+                {/* Visual Auras */}
+                <div className="absolute top-1/4 -left-1/4 w-[600px] h-[600px] bg-primary/10 rounded-full blur-[180px] animate-pulse z-[0]" />
+                <div className="absolute bottom-1/4 -right-1/4 w-[600px] h-[600px] bg-secondary/10 rounded-full blur-[180px] animate-pulse z-[0]" />
 
-            {/* Level Progress Section */}
-            <Card className="border-slate-800/50">
-                <div className="p-6">
-                    <div className="flex items-center justify-between mb-4">
-                        <div>
-                            <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                                <TrendingUp size={20} className="text-indigo-400" />
-                                Level {stats.level}
-                            </h3>
-                            <p className="text-sm text-slate-400 mt-1">
-                                {100 - progressInLevel} XP to Level {stats.level + 1}
-                            </p>
-                        </div>
-                        <div className="text-right">
-                            <p className="text-2xl font-bold text-white">{progressInLevel} / 100</p>
-                            <p className="text-xs text-slate-500">XP in current level</p>
-                        </div>
+                <div className="relative text-center space-y-8 max-w-7xl">
+                    <div className="hero-sub flex items-center justify-center gap-4 mb-4">
+                        <div className="h-[1px] w-12 bg-primary/50" />
+                        <span className="text-[10px] font-black uppercase tracking-[0.6em] text-primary italic">Sector Alpha Deployment</span>
+                        <div className="h-[1px] w-12 bg-primary/50" />
                     </div>
-                    <div className="relative h-3 bg-slate-800 rounded-full overflow-hidden">
-                        <div
-                            className="absolute inset-y-0 left-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-500 ease-out"
-                            style={{ width: `${Math.min(progressPercent, 100)}%` }}
-                        />
+
+                    <h1 className="text-[12vw] md:text-[10rem] lg:text-[13rem] font-black leading-[0.8] tracking-tighter italic uppercase flex flex-col">
+                        <span className="hero-title-part overflow-hidden block">FORGE</span>
+                        <span className="hero-title-part overflow-hidden block bg-clip-text text-transparent bg-gradient-to-r from-primary via-white to-secondary bg-[length:200%_auto] animate-[gradient_8s_linear_infinite]">LEGACY.</span>
+                    </h1>
+
+                    <div className="hero-sub flex flex-col md:flex-row justify-center gap-8 pt-16">
+                        <Link to="/rooms" className="group relative">
+                            <div className="absolute -inset-1 bg-gradient-to-r from-primary to-secondary rounded-full blur opacity-25 group-hover:opacity-60 transition duration-1000"></div>
+                            <button className="relative px-16 py-8 bg-white text-black font-black uppercase tracking-[0.5em] text-[10px] italic rounded-full transition-transform active:scale-95">Launch Sector</button>
+                        </Link>
+                        <button className="px-16 py-8 bg-white/5 border border-white/10 text-white font-black uppercase tracking-[0.5em] text-[10px] italic rounded-full hover:bg-white/10 transition-all border-b-2 border-primary/20">Technical Intelligence</button>
                     </div>
                 </div>
-            </Card>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Mini Leaderboard */}
-                <Card className="border-slate-800/50">
-                    <div className="p-6">
-                        <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                                <Trophy size={20} className="text-yellow-400" />
-                                Top Adventurers
-                            </h3>
-                            <Link to="/leaderboard">
-                                <button className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-1">
-                                    View All <ArrowRight size={14} />
+                {/* SCROLL Indicator */}
+                <div className="scroll-indicator absolute bottom-16 left-1/2 -translate-x-1/2 flex flex-col items-center gap-6">
+                    <span className="text-[10px] font-black uppercase tracking-[0.5em] text-white/30 italic">Explore System</span>
+                    <div className="scroll-indicator-line" />
+                </div>
+            </section>
+
+            {/* 2. Motivation Engine (High-Impact Marquee) */}
+            <section className="gsap-reveal relative z-[10] border-y border-white/5 py-20 bg-primary/[0.01] overflow-hidden">
+                <div className="animate-marquee flex items-center gap-32 whitespace-nowrap">
+                    {[...universityQuotes, ...universityQuotes].map((quote, i) => (
+                        <div key={i} className="flex items-center gap-16">
+                            <Zap className="text-primary/40" size={32} />
+                            <p className="text-5xl md:text-7xl font-black text-white italic uppercase tracking-tighter opacity-10 hover:opacity-100 transition-all cursor-default select-none hover:text-primary">
+                                {quote}
+                            </p>
+                        </div>
+                    ))}
+                </div>
+            </section>
+
+            {/* 3. Operational Grid */}
+            <section className="gsap-reveal max-w-[1800px] mx-auto p-8 md:p-24 lg:p-32 grid grid-cols-1 lg:grid-cols-12 gap-12 relative z-[10]">
+                {/* Left Side: Stats & Personal Meta */}
+                <div className="lg:col-span-7 space-y-12 md:space-y-16">
+                    <div className="space-y-4 md:space-y-6">
+                        <div className="flex items-center gap-4 md:gap-6">
+                            <div className="h-[2px] w-12 md:w-20 bg-primary" />
+                            <span className="text-primary font-black uppercase tracking-[0.4em] text-[9px] md:text-[10px] italic">Biometric standing confirmed</span>
+                        </div>
+                        <h2 className="text-6xl md:text-8xl lg:text-[9rem] font-black text-white italic tracking-[calc(-0.06em)] leading-[0.8] uppercase">
+                            STATUS <br /> <span className="text-white/20">REPORT.</span>
+                        </h2>
+                    </div>
+
+                    <div className="minimal-card rounded-[2rem] md:rounded-[3rem] p-8 md:p-12 hover-lift relative group overflow-hidden neon-glow-primary">
+                        <div className="absolute top-0 right-0 p-8 md:p-12 opacity-[0.03] rotate-12 group-hover:rotate-0 transition-transform duration-1000">
+                            <Map size={250} />
+                        </div>
+                        <div className="flex justify-between items-start mb-12 md:mb-16 relative z-10">
+                            <div>
+                                <p className="text-[10px] font-black text-primary uppercase tracking-[0.4em] mb-2 md:mb-4">Command Identity</p>
+                                <h4 className="text-4xl md:text-6xl font-black text-white italic uppercase">{user?.username}</h4>
+                            </div>
+                            <div className="p-4 md:p-6 bg-primary text-white rounded-2xl md:rounded-3xl shadow-[0_0_30px_hsla(var(--primary),0.4)]">
+                                <Shield size={28} />
+                            </div>
+                        </div>
+
+                        <div className="space-y-6 relative z-10">
+                            <div className="flex justify-between items-end">
+                                <p className="text-[10px] font-black uppercase tracking-widest text-white/40">Technical Level: <span className="text-white">{stats.level}</span></p>
+                                <p className="text-4xl font-black italic text-white">{progressInLevel} <span className="text-xs text-primary/60 not-italic">/ 100 XP</span></p>
+                            </div>
+                            <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                                <div className="h-full bg-gradient-to-r from-primary to-secondary transition-all duration-1000 ease-out" style={{ width: `${progressPercent}%` }} />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Right Side: Quick Stats Matrix */}
+                <div className="lg:col-span-5 flex flex-col gap-6 md:gap-8">
+                    <div className="grid grid-cols-2 gap-6 md:gap-8 flex-1">
+                        <div className="minimal-card rounded-[1.5rem] md:rounded-[2.5rem] p-6 md:p-10 flex flex-col justify-between group hover:border-secondary/30 transition-all">
+                            <Flame className="text-secondary/20 group-hover:text-secondary group-hover:scale-110 transition-all" size={28} />
+                            <div>
+                                <p className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-2">Ops Streak</p>
+                                <p className="text-3xl md:text-5xl font-black text-white italic">{stats.streak} Days</p>
+                            </div>
+                        </div>
+                        <div className="minimal-card rounded-[1.5rem] md:rounded-[2.5rem] p-6 md:p-10 flex flex-col justify-between group hover:border-primary/30 transition-all">
+                            <TrendingUp className="text-primary/20 group-hover:text-primary group-hover:scale-110 transition-all" size={28} />
+                            <div>
+                                <p className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-2">Global Standing</p>
+                                <p className="text-3xl md:text-5xl font-black text-white italic">#{stats.rank || 'N/A'}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="minimal-card rounded-[2.5rem] p-12 bg-white text-black border-none group hover-lift overflow-hidden">
+                        <div className="absolute -right-12 -bottom-12 w-64 h-64 bg-black/5 rounded-full blur-[60px]" />
+                        <div className="relative z-10 space-y-8">
+                            <div className="flex justify-between items-center">
+                                <h3 className="text-3xl font-black italic uppercase tracking-tighter">Sector Ops</h3>
+                                <div className="p-4 bg-black text-white rounded-2xl"><Target size={20} /></div>
+                            </div>
+                            <p className="text-black/60 font-medium italic text-lg leading-tight uppercase">Analyze and deploy solutions to open technical sectors to increase standing.</p>
+                            <Link to="/rooms">
+                                <button className="w-full py-6 bg-black text-white rounded-full font-black uppercase tracking-[0.4em] text-[10px] italic hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4">
+                                    Initiate Deployment <ArrowRight size={16} />
                                 </button>
                             </Link>
                         </div>
-
-                        {loading ? (
-                            <div className="space-y-3">
-                                {[...Array(5)].map((_, i) => (
-                                    <div key={i} className="h-12 bg-slate-800 rounded-lg animate-pulse" />
-                                ))}
-                            </div>
-                        ) : topLeaderboard.length > 0 ? (
-                            <div className="space-y-2">
-                                {topLeaderboard.map((entry) => (
-                                    <div
-                                        key={entry.user_id}
-                                        className={clsx(
-                                            "flex items-center gap-4 p-3 rounded-lg transition-colors",
-                                            entry.user_id === user?.id ? "bg-indigo-500/10 border border-indigo-500/20" : "hover:bg-slate-800/50"
-                                        )}
-                                    >
-                                        <div className={clsx(
-                                            "w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm",
-                                            entry.rank === 1 ? "bg-yellow-500/20 text-yellow-500" :
-                                                entry.rank === 2 ? "bg-slate-300/20 text-slate-300" :
-                                                    entry.rank === 3 ? "bg-amber-700/20 text-amber-700" : "bg-slate-700 text-slate-400"
-                                        )}>
-                                            #{entry.rank}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-white font-medium truncate">
-                                                {entry.username}
-                                                {entry.user_id === user?.id && (
-                                                    <span className="text-xs text-indigo-400 ml-2">(You)</span>
-                                                )}
-                                            </p>
-                                        </div>
-                                        <p className="text-sm font-bold text-indigo-400">{entry.total_xp} XP</p>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <p className="text-slate-500 text-center py-8">No leaderboard data yet</p>
-                        )}
                     </div>
-                </Card>
-
-                {/* Activity Section */}
-                <Card className="border-slate-800/50">
-                    <div className="p-6">
-                        <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-6">
-                            <Clock size={20} className="text-green-400" />
-                            Recent Activity
-                        </h3>
-
-                        {stats.lastSubmission ? (
-                            <div className="space-y-4">
-                                <div className="p-4 bg-slate-800/50 rounded-lg border border-slate-700/50">
-                                    <p className="text-sm text-slate-400 mb-1">Last Quest Completed</p>
-                                    <p className="text-white font-medium mb-2">{stats.lastSubmission.title}</p>
-                                    <p className="text-xs text-slate-500">
-                                        {new Date(stats.lastSubmission.date).toLocaleString()}
-                                    </p>
-                                </div>
-
-                                <div className="pt-4 border-t border-slate-800">
-                                    <Link to="/rooms">
-                                        <button className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-bold transition-all hover:scale-[1.02] flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/20">
-                                            Find More Quests <ArrowRight size={18} />
-                                        </button>
-                                    </Link>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="text-center py-8">
-                                <p className="text-slate-500 mb-6">No quests completed yet</p>
-                                <Link to="/rooms">
-                                    <button className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-bold transition-all hover:scale-[1.02] flex items-center justify-center gap-2 mx-auto shadow-lg shadow-indigo-500/20">
-                                        Start Your First Quest  <ArrowRight size={18} />
-                                    </button>
-                                </Link>
-                            </div>
-                        )}
-                    </div>
-                </Card>
-            </div>
-
-            {/* CTA Card */}
-            <Card className="bg-gradient-to-r from-indigo-900 to-violet-900 border-none relative overflow-hidden group">
-                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
-                <div className="absolute right-0 bottom-0 opacity-10 group-hover:opacity-20 transition-opacity transform translate-y-12 translate-x-12">
-                    <Target size={300} />
                 </div>
-                <div className="relative z-10 p-8">
-                    <h2 className="text-2xl font-bold text-white mb-2">Ready to level up?</h2>
-                    <p className="text-indigo-200 mb-6 max-w-lg leading-relaxed">
-                        Complete quests, earn XP, and climb the leaderboard. Every submission counts!
-                    </p>
-                    <Link to="/rooms">
-                        <button className="bg-white text-indigo-950 px-8 py-3 rounded-xl font-bold hover:bg-indigo-50 hover:scale-105 transition-all flex items-center gap-2 shadow-xl">
-                            Browse Rooms <ArrowRight size={18} />
-                        </button>
+            </section>
+
+            {/* 4. The Council Preview */}
+            <section className="gsap-reveal max-w-[1800px] mx-auto p-8 md:p-24 lg:p-32 relative z-[10]">
+                <div className="flex flex-col md:flex-row items-end justify-between mb-12 md:mb-20 gap-8">
+                    <h2 className="text-5xl md:text-7xl lg:text-[8rem] font-black text-white italic leading-[0.8] uppercase tracking-tighter">
+                        GLOBAL <br /> <span className="text-white/10 text-[4rem] md:text-[6rem] lg:text-[10rem]">COUNCIL.</span>
+                    </h2>
+                    <Link to="/leaderboard" className="group">
+                        <span className="text-[10px] font-black uppercase tracking-[0.5em] text-white/40 group-hover:text-primary transition-colors flex items-center gap-4 italic mb-4">View All Operators <ArrowRight size={14} /></span>
                     </Link>
                 </div>
-            </Card>
+
+                <div className="space-y-px bg-white/5 rounded-[3rem] overflow-hidden border border-white/5 neon-glow-secondary">
+                    {topLeaderboard.map((entry, i) => (
+                        <div key={i} className="flex items-center justify-between p-10 md:p-14 bg-black hover:bg-white/[0.03] transition-all group">
+                            <div className="flex items-center gap-10">
+                                <span className="text-4xl font-black italic text-white/10 group-hover:text-secondary group-hover:translate-x-2 transition-all">0{i + 1}</span>
+                                <div>
+                                    <p className="text-3xl font-black text-white italic uppercase tracking-tighter">{entry.username}</p>
+                                    <p className="text-[9px] font-black uppercase tracking-widest text-secondary mt-1">Verified Member</p>
+                                </div>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-4xl font-black italic text-white leading-none">{entry.total_xp}</p>
+                                <p className="text-[9px] font-black uppercase tracking-widest text-white/20 mt-2 italic">Points</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </section>
+
+            {/* 5. Production Outro */}
+            <section className="gsap-reveal p-8 md:p-24 lg:p-32 z-[10] relative">
+                <div className="bg-white/5 border border-white/10 rounded-[5rem] p-16 md:p-32 text-center relative overflow-hidden group">
+                    <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-primary/5 via-transparent to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+                    <div className="relative z-10 space-y-12">
+                        <h2 className="text-8xl md:text-[12rem] font-black text-white italic leading-[0.8] tracking-[calc(-0.06em)] uppercase">
+                            EXECUTE <br /> <span className="text-white/10">VISION.</span>
+                        </h2>
+                        <div className="max-w-3xl mx-auto">
+                            <p className="text-white/40 text-2xl md:text-3xl font-medium italic leading-tight mb-16">
+                                Join the vanguard of university technical predators. Your legacy is defined by your deployment.
+                            </p>
+                            <Link to="/rooms">
+                                <button className="px-20 py-10 bg-white text-black font-black uppercase tracking-[0.6em] text-xs italic rounded-full shadow-[0_0_80px_hsla(var(--primary),0.3)] hover:scale-105 active:scale-95 transition-all">
+                                    Final Authorization
+                                </button>
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            </section>
         </div>
     )
 }

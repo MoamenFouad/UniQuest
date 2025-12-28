@@ -5,13 +5,32 @@ from .models import TaskType
 
 class UserBase(BaseModel):
     username: str
-    student_id: str
+    email: Optional[str] = None
+    student_id: Optional[str] = None
 
 class UserCreate(UserBase):
-    pass
+    password: str
+
+class UserUpdate(BaseModel):
+    username: Optional[str] = None
+    email: Optional[str] = None
+    student_id: Optional[str] = None
+    old_password: Optional[str] = None
+    password: Optional[str] = None
+    confirm_password: Optional[str] = None
+
+class UserLogin(BaseModel):
+    identifier: str # username or email
+    password: str
+
+class FirebaseLogin(BaseModel):
+    id_token: str
+    provider: str
 
 class UserResponse(UserBase):
     id: int
+    provider: str
+    firebase_uid: Optional[str] = None
     created_at: datetime
 
     class Config:
