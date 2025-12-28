@@ -3,6 +3,12 @@ import threading
 import time
 import os
 import signal
+import sys
+
+# Force UTF-8 encoding for stdout/stderr to prevent UnicodeEncodeError on Windows
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding='utf-8')
+    sys.stderr.reconfigure(encoding='utf-8')
 
 def kill_port(port):
     """Hunt and kill anything on a specific port in Windows."""

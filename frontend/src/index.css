@@ -45,23 +45,27 @@
   html {
     scroll-behavior: initial;
     -webkit-tap-highlight-color: transparent;
-    background-color: hsl(var(--background));
+    background-color: #000000;
+    height: 100%;
   }
 
   body {
     @apply text-white antialiased selection:bg-primary selection:text-white;
-    font-family: 'Outfit', sans-serif;
-    background-color: hsl(var(--background));
+    font-family: 'Inter', sans-serif;
+    background-color: #000000;
     text-rendering: optimizeLegibility;
     overflow-x: hidden;
+    min-height: 100%;
+    overscroll-behavior-y: none;
   }
 
   h1,
   h2,
   h3,
   h4 {
-    @apply font-black tracking-tighter uppercase italic;
-    line-height: 0.85;
+    @apply font-black tracking-tight uppercase italic;
+    font-family: 'Space Grotesk', sans-serif;
+    line-height: 0.9;
     /* Better readability */
     font-size: clamp(2.5rem, 8vw, 10rem);
     /* Refined sizing */

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react"
 import { useAuth } from "../context/AuthContext"
 import { useApp } from "../context/AppContext"
 import { Link, useLocation } from "react-router-dom"
-import { LayoutDashboard, Users, Trophy, LogOut, Menu, X, ChevronRight, Settings, Zap, Map } from "lucide-react"
+import { LayoutDashboard, Users, Trophy, LogOut, Menu, X, ChevronRight, Settings, Zap, Map, Shield, Target, Eye, EyeOff } from "lucide-react"
 import { clsx } from "clsx"
 
 export function Layout({ children }) {
@@ -19,6 +19,12 @@ export function Layout({ children }) {
     })
     const [prefsError, setPrefsError] = useState("")
     const [prefsSuccess, setPrefsSuccess] = useState("")
+    const [profilePicture, setProfilePicture] = useState(null)
+    const [profilePicturePreview, setProfilePicturePreview] = useState(null)
+    const [isChangingPassword, setIsChangingPassword] = useState(false)
+    const [showOldPassword, setShowOldPassword] = useState(false)
+    const [showNewPassword, setShowNewPassword] = useState(false)
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
     useEffect(() => {
         const handleScroll = () => setScrolled(window.scrollY > 50)
@@ -27,9 +33,9 @@ export function Layout({ children }) {
     }, [])
 
     const navItems = [
-        { icon: LayoutDashboard, label: "Intelligence", path: "/" },
-        { icon: Users, label: "Sectors", path: "/rooms" },
-        { icon: Trophy, label: "Council", path: "/leaderboard" },
+        { icon: LayoutDashboard, label: "Home", path: "/" },
+        { icon: Users, label: "Rooms", path: "/rooms" },
+        { icon: Trophy, label: "Leaderboard", path: "/leaderboard" },
     ]
 
     const handleStartEdit = () => {
@@ -104,34 +110,16 @@ export function Layout({ children }) {
                         className="flex items-center gap-5 group py-2"
                     >
                         <div className="flex flex-col items-end leading-none hidden md:block">
-                            <p className="text-[10px] font-black uppercase tracking-widest text-white/40 italic">Operator</p>
-                            <p className="text-sm font-black italic uppercase text-white group-hover:text-primary transition-colors">{user?.username}</p>
+                            <p className="text-sm font-bold uppercase text-white group-hover:text-primary transition-colors">{user?.username}</p>
                         </div>
-                        <div className="w-12 h-12 rounded-full border-2 border-primary/20 bg-surface flex items-center justify-center font-black text-sm hover:border-primary hover:bg-primary hover:text-white transition-all shadow-[0_0_15px_hsla(var(--primary),0.2)]">
-                            {user?.username?.[0]?.toUpperCase()}
+                        <div className="w-12 h-12 rounded-full border-2 border-primary/20 bg-surface flex items-center justify-center font-black text-sm hover:border-primary hover:bg-primary hover:text-white transition-all shadow-[0_0_15px_hsla(var(--primary),0.2)] overflow-hidden">
+                            {user?.profile_picture ? (
+                                <img src={user.profile_picture} alt={user.username} className="w-full h-full object-cover" />
+                            ) : (
+                                user?.username?.[0]?.toUpperCase()
+                            )}
                         </div>
-                        {isAccountMenuOpen && (
-                            <>
-                                <div className="fixed inset-0 z-10" onClick={() => setIsAccountMenuOpen(false)} />
-                                <div className="absolute top-[calc(100%+20px)] right-8 w-72 bg-black border border-primary/20 p-6 rounded-3xl shadow-[0_30px_60px_rgba(0,0,0,0.8)] z-[60] overflow-hidden animate-in fade-in slide-in-from-top-6">
-                                    <div className="absolute top-0 right-0 p-10 opacity-[0.05] pointer-events-none"><Zap size={100} /></div>
-                                    <div className="border-b border-white/5 pb-6 mb-4">
-                                        <p className="text-2xl font-black italic uppercase leading-none">{user?.username}</p>
-                                        <p className="text-[10px] font-black text-primary uppercase tracking-[0.4em] mt-3 italic">Verified Specialized Unit</p>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <button onClick={() => { setIsAccountMenuOpen(false); setIsPrefsModalOpen(true); }} className="w-full flex items-center justify-between p-4 rounded-2xl hover:bg-white/5 text-[10px] font-black uppercase tracking-widest transition-all group/btn">
-                                            <span className="flex items-center gap-4"><Settings size={16} className="text-primary/60 group-hover/btn:rotate-90 transition-transform" /> Identity Protocol</span>
-                                            <ChevronRight size={14} className="opacity-0 group-hover/btn:opacity-100 transition-opacity" />
-                                        </button>
-                                        <button onClick={() => { setIsAccountMenuOpen(false); logout(); }} className="w-full flex items-center justify-between p-4 rounded-2xl hover:bg-red-500/10 text-red-500 text-[10px] font-black uppercase tracking-widest transition-all group/btn">
-                                            <span className="flex items-center gap-4"><LogOut size={16} /> Terminate Sync</span>
-                                            <X size={14} className="opacity-0 group-hover/btn:opacity-100 transition-opacity" />
-                                        </button>
-                                    </div>
-                                </div>
-                            </>
-                        )}
+                        {/* Sidebar Trigger (Avatar) - Dropdown Removed */}
                     </button>
 
                     <button
@@ -170,6 +158,76 @@ export function Layout({ children }) {
                 </div>
             </div>
 
+            {/* Right Sidebar: Account Hub */}
+            <div className={clsx("fixed inset-0 z-[100] transition-all duration-700", isAccountMenuOpen ? "pointer-events-auto" : "pointer-events-none")}>
+                {/* Backdrop */}
+                <div
+                    className={clsx("absolute inset-0 bg-black/80 backdrop-blur-sm transition-opacity duration-700", isAccountMenuOpen ? "opacity-100" : "opacity-0")}
+                    onClick={() => setIsAccountMenuOpen(false)}
+                />
+
+                {/* Sidebar Panel */}
+                <div className={clsx("absolute top-0 right-0 h-full w-full md:w-[480px] bg-[#050505] border-l border-white/10 shadow-2xl flex flex-col transition-transform duration-700 ease-[cubic-bezier(0.23,1,0.32,1)]", isAccountMenuOpen ? "translate-x-0" : "translate-x-full")}>
+
+                    {/* Header */}
+                    <div className="p-8 md:p-10 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
+                        <h2 className="text-xl font-bold uppercase tracking-widest text-white/80">Account Center</h2>
+                        <button onClick={() => setIsAccountMenuOpen(false)} className="p-2 rounded-full hover:bg-white/10 text-white/40 hover:text-white transition-colors">
+                            <X size={24} />
+                        </button>
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-1 overflow-y-auto p-8 md:p-10 space-y-10 group/hub">
+                        {/* Profile Card */}
+                        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-white/5 to-transparent border border-white/5 p-8 text-center group-hover/hub:border-primary/20 transition-colors">
+                            <div className="absolute top-0 right-0 p-12 opacity-[0.03] pointer-events-none rotate-12"><Zap size={150} /></div>
+
+                            <div className="relative z-10 flex flex-col items-center">
+                                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-secondary p-[2px] mb-6 shadow-xl">
+                                    <div className="w-full h-full rounded-full bg-black flex items-center justify-center overflow-hidden">
+                                        {user?.profile_picture ? (
+                                            <img src={user.profile_picture} alt={user.username} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <span className="text-3xl font-black italic text-white">{user?.username?.[0]?.toUpperCase()}</span>
+                                        )}
+                                    </div>
+                                </div>
+                                <h3 className="text-2xl font-bold text-white mb-2">{user?.username}</h3>
+                                <p className="text-sm font-medium text-white/40 mb-6">{user?.email}</p>
+                                <span className="px-4 py-2 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-widest border border-primary/20">
+                                    Student
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Menu Actions */}
+                        <div className="space-y-4">
+                            <p className="text-xs font-bold text-white/20 uppercase tracking-widest pl-2 mb-2">Preferences</p>
+
+                            <button onClick={() => { setIsAccountMenuOpen(false); setIsPrefsModalOpen(true); }} className="w-full flex items-center gap-4 p-5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/10 transition-all group/item text-left">
+                                <div className="p-3 rounded-xl bg-black text-white group-hover/item:text-primary transition-colors">
+                                    <Settings size={20} />
+                                </div>
+                                <div>
+                                    <p className="font-bold text-white text-sm">Profile Settings</p>
+                                    <p className="text-xs text-white/40 mt-1">Update personal information</p>
+                                </div>
+                                <ChevronRight size={16} className="ml-auto text-white/20 group-hover/item:text-white transition-colors" />
+                            </button>
+                        </div>
+
+                        {/* Danger Zone */}
+                        <div className="pt-8 border-t border-white/5">
+                            <button onClick={() => { setIsAccountMenuOpen(false); logout(); }} className="w-full flex items-center justify-center gap-3 p-5 rounded-2xl bg-red-500/10 hover:bg-red-500/20 text-red-500 transition-all font-bold uppercase tracking-wider text-xs">
+                                <LogOut size={16} />
+                                Sign Out
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             {/* Main Operational Surface */}
             <main className="flex-1 pt-24 relative z-[1]">
                 {children}
@@ -181,11 +239,11 @@ export function Layout({ children }) {
                 <div className="max-w-[1600px] mx-auto flex flex-col lg:flex-row justify-between items-end gap-16 md:gap-20">
                     <div className="space-y-8">
                         <span className="font-black text-6xl italic tracking-tighter">UQ<span className="text-primary">.</span></span>
-                        <p className="text-white/30 font-black uppercase tracking-[0.4em] text-[10px] italic max-w-sm leading-relaxed">Defining technical predators via deployment-based legacy forge system v2.5.0</p>
+                        <p className="text-white/30 font-black uppercase tracking-[0.4em] text-[10px] italic max-w-sm leading-relaxed">Empowering students with advanced learning tools v2.5.0</p>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-16 lg:gap-32 w-full lg:w-auto">
                         <div className="space-y-6">
-                            <p className="text-[10px] font-black uppercase text-primary tracking-[0.5em] italic">Intelligence</p>
+                            <p className="text-[10px] font-black uppercase text-primary tracking-[0.5em] italic">Resources</p>
                             <div className="flex flex-col gap-4 text-sm font-black italic text-white/40">
                                 <a href="#" className="hover:text-white transition-colors">GitHub</a>
                                 <a href="#" className="hover:text-white transition-colors">Discord</a>
@@ -193,7 +251,7 @@ export function Layout({ children }) {
                             </div>
                         </div>
                         <div className="space-y-6 text-right md:text-left">
-                            <p className="text-[10px] font-black uppercase text-primary tracking-[0.5em] italic">Directives</p>
+                            <p className="text-[10px] font-black uppercase text-primary tracking-[0.5em] italic">Legal</p>
                             <div className="flex flex-col gap-4 text-sm font-black italic text-white/40">
                                 <a href="#" className="hover:text-white transition-colors">Privacy</a>
                                 <a href="#" className="hover:text-white transition-colors">Terms</a>
@@ -234,6 +292,59 @@ export function Layout({ children }) {
                             {prefsSuccess && <p className="mb-8 p-6 bg-green-500/5 border border-green-500/20 rounded-2xl text-green-500 font-black italic uppercase tracking-[0.2em] text-[10px]">{prefsSuccess}</p>}
 
                             <form onSubmit={handleUpdateProfile} className="space-y-10">
+                                {/* Profile Picture Upload */}
+                                <div className="space-y-4">
+                                    <label className="text-[10px] font-black text-primary uppercase tracking-[0.4em] ml-2 italic">Profile Picture</label>
+                                    <div className="flex items-center gap-6">
+                                        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-secondary p-[2px] shadow-xl">
+                                            <div className="w-full h-full rounded-full bg-black flex items-center justify-center overflow-hidden">
+                                                {profilePicturePreview || user?.profile_picture ? (
+                                                    <img src={profilePicturePreview || user.profile_picture} alt="Profile" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <span className="text-3xl font-black italic text-white">{user?.username?.[0]?.toUpperCase()}</span>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="flex-1">
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={(e) => {
+                                                    const file = e.target.files?.[0]
+                                                    if (file) {
+                                                        setProfilePicture(file)
+                                                        const reader = new FileReader()
+                                                        reader.onloadend = () => setProfilePicturePreview(reader.result)
+                                                        reader.readAsDataURL(file)
+                                                    }
+                                                }}
+                                                className="hidden"
+                                                id="profile-picture-upload"
+                                                disabled={!isEditing}
+                                            />
+                                            <label
+                                                htmlFor="profile-picture-upload"
+                                                className={`inline-block px-8 py-4 bg-white/5 border border-white/10 rounded-2xl text-white font-black uppercase text-[10px] tracking-[0.3em] italic transition-all ${isEditing ? 'cursor-pointer hover:bg-white/10 hover:border-primary/30' : 'opacity-50 cursor-not-allowed'
+                                                    }`}
+                                            >
+                                                Choose Image
+                                            </label>
+                                            {profilePicturePreview && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setProfilePicture(null)
+                                                        setProfilePicturePreview(null)
+                                                    }}
+                                                    className="ml-4 px-6 py-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-500 font-black uppercase text-[10px] tracking-[0.3em] italic hover:bg-red-500/20 transition-all"
+                                                >
+                                                    Remove
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     <div className="space-y-3">
                                         <label className="text-[10px] font-black text-primary uppercase tracking-[0.4em] ml-2 italic">Operator Alias</label>
@@ -247,28 +358,118 @@ export function Layout({ children }) {
 
                                 {isEditing ? (
                                     <div className="space-y-10 pt-8 border-t border-white/5 animate-in fade-in duration-700">
-                                        <div className="space-y-3">
-                                            <label className="text-[10px] font-black text-red-500 uppercase tracking-[0.4em] ml-2 italic">Root Key Authorization (Old Key)</label>
-                                            <input type="password" value={editData.old_password} onChange={(e) => setEditData({ ...editData, old_password: e.target.value })} className="w-full bg-red-500/5 border border-red-500/10 p-6 rounded-2xl text-white italic" placeholder="••••••••" />
-                                        </div>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                            <div className="space-y-3">
-                                                <label className="text-[10px] font-black text-primary uppercase tracking-[0.4em] ml-2 italic">Define New Key</label>
-                                                <input type="password" value={editData.password} onChange={(e) => setEditData({ ...editData, password: e.target.value })} className="w-full bg-white/5 border border-white/5 p-6 rounded-2xl text-white italic" placeholder="••••••••" />
+                                        {/* Change Password Button or Password Fields */}
+                                        {!isChangingPassword ? (
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsChangingPassword(true)}
+                                                className="w-full py-6 bg-white/5 border border-white/10 text-white font-black uppercase text-[10px] tracking-[0.4em] italic rounded-2xl hover:bg-white/10 hover:border-primary/30 transition-all flex items-center justify-center gap-4"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+                                                Change Password
+                                            </button>
+                                        ) : (
+                                            <div className="space-y-6 animate-in fade-in duration-500">
+                                                <div className="flex items-center justify-between mb-4">
+                                                    <h4 className="text-sm font-black text-primary uppercase tracking-widest italic">Password Change</h4>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setIsChangingPassword(false)
+                                                            setEditData({ ...editData, old_password: "", password: "", confirm_password: "" })
+                                                        }}
+                                                        className="text-white/40 hover:text-red-500 transition-colors"
+                                                    >
+                                                        <X size={20} />
+                                                    </button>
+                                                </div>
+
+                                                {/* Step 1: Old Password */}
+                                                <div className="space-y-3">
+                                                    <label className="text-[10px] font-black text-white/60 uppercase tracking-[0.3em] ml-2 italic flex items-center gap-2">
+                                                        <span className="w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs">1</span>
+                                                        Current Password
+                                                    </label>
+                                                    <div className="relative">
+                                                        <input
+                                                            type={showOldPassword ? "text" : "password"}
+                                                            value={editData.old_password}
+                                                            onChange={(e) => setEditData({ ...editData, old_password: e.target.value })}
+                                                            className="w-full bg-white/5 border border-white/10 p-6 pr-14 rounded-2xl text-white italic focus:border-primary/50 focus:bg-white/10 transition-all"
+                                                            placeholder="Enter current password"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setShowOldPassword(!showOldPassword)}
+                                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors"
+                                                        >
+                                                            {showOldPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                {/* Step 2: New Password */}
+                                                <div className="space-y-3">
+                                                    <label className="text-[10px] font-black text-white/60 uppercase tracking-[0.3em] ml-2 italic flex items-center gap-2">
+                                                        <span className="w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs">2</span>
+                                                        New Password
+                                                    </label>
+                                                    <div className="relative">
+                                                        <input
+                                                            type={showNewPassword ? "text" : "password"}
+                                                            value={editData.password}
+                                                            onChange={(e) => setEditData({ ...editData, password: e.target.value })}
+                                                            className="w-full bg-white/5 border border-white/10 p-6 pr-14 rounded-2xl text-white italic focus:border-primary/50 focus:bg-white/10 transition-all"
+                                                            placeholder="Enter new password"
+                                                            disabled={!editData.old_password}
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setShowNewPassword(!showNewPassword)}
+                                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors"
+                                                            disabled={!editData.old_password}
+                                                        >
+                                                            {showNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                {/* Step 3: Confirm Password */}
+                                                <div className="space-y-3">
+                                                    <label className="text-[10px] font-black text-white/60 uppercase tracking-[0.3em] ml-2 italic flex items-center gap-2">
+                                                        <span className="w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs">3</span>
+                                                        Confirm New Password
+                                                    </label>
+                                                    <div className="relative">
+                                                        <input
+                                                            type={showConfirmPassword ? "text" : "password"}
+                                                            value={editData.confirm_password}
+                                                            onChange={(e) => setEditData({ ...editData, confirm_password: e.target.value })}
+                                                            className="w-full bg-white/5 border border-white/10 p-6 pr-14 rounded-2xl text-white italic focus:border-primary/50 focus:bg-white/10 transition-all"
+                                                            placeholder="Confirm new password"
+                                                            disabled={!editData.password}
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors"
+                                                            disabled={!editData.password}
+                                                        >
+                                                            {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                                        </button>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div className="space-y-3">
-                                                <label className="text-[10px] font-black text-primary uppercase tracking-[0.4em] ml-2 italic">Confirm Matrix Key</label>
-                                                <input type="password" value={editData.confirm_password} onChange={(e) => setEditData({ ...editData, confirm_password: e.target.value })} className="w-full bg-white/5 border border-white/5 p-6 rounded-2xl text-white italic" placeholder="••••••••" />
-                                            </div>
-                                        </div>
-                                        <div className="flex gap-4">
-                                            <button type="submit" className="flex-1 py-6 bg-white text-black font-black uppercase text-[10px] tracking-[0.5em] italic rounded-2xl hover:bg-primary hover:text-white transition-all shadow-2xl">Execute Integrity Update</button>
-                                            <button type="button" onClick={() => setIsEditing(false)} className="px-10 py-6 bg-white/5 font-black uppercase text-[10px] tracking-[0.5em] italic rounded-2xl hover:bg-white/10 transition-all">Abort Sync</button>
+                                        )}
+
+                                        <div className="flex gap-4 pt-4">
+                                            <button type="submit" className="flex-1 py-6 bg-white text-black font-black uppercase text-[10px] tracking-[0.5em] italic rounded-2xl hover:bg-primary hover:text-white transition-all shadow-2xl">Save Changes</button>
+                                            <button type="button" onClick={() => { setIsEditing(false); setIsChangingPassword(false); }} className="px-10 py-6 bg-white/5 font-black uppercase text-[10px] tracking-[0.5em] italic rounded-2xl hover:bg-white/10 transition-all">Cancel</button>
                                         </div>
                                     </div>
                                 ) : (
                                     <button type="button" onClick={handleStartEdit} className="w-full py-6 bg-white text-black font-black uppercase text-[10px] tracking-[0.5em] italic rounded-2xl hover:bg-primary hover:text-white transition-all group flex items-center justify-center gap-6">
-                                        <Settings size={20} className="group-hover:rotate-90 transition-transform" /> Initialize Identity Edit
+                                        <Settings size={20} className="group-hover:rotate-90 transition-transform" /> Edit Profile
                                     </button>
                                 )}
                             </form>

@@ -13,6 +13,10 @@ export default {
                 card: "#0a0a0a", // Near Black
                 border: "#1a1a1a", // Deep Gray
                 surface: "#121212", // Surface Gray
+            },
+            fontFamily: {
+                sans: ['Inter', 'sans-serif'],
+                heading: ['Space Grotesk', 'sans-serif'],
             }
         },
     },
