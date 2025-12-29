@@ -3,12 +3,13 @@ from sqlalchemy.orm import Session
 from typing import List
 import uuid
 from ..database import get_db
-from ..models import Room, RoomMember, User, Submission
+from ..models import Room, RoomMember, User, Submission, Task
 from ..schemas import RoomCreate, RoomResponse, LeaderboardEntry
 from ..utils.auth import get_current_user
 from ..utils.game_logic import get_daily_multiplier
 from sqlalchemy import func
 from itertools import groupby
+from collections import defaultdict
 
 router = APIRouter(prefix="/rooms", tags=["rooms"])
 
@@ -52,31 +53,34 @@ def get_leaderboard(code: str, db: Session = Depends(get_db)):
     if not room:
         raise HTTPException(status_code=404, detail="Room not found")
     
-    members = db.query(User).join(RoomMember).filter(RoomMember.room_id == room.id).all()
-    leaderboard = []
+    # Fetch all submissions for tasks in this room
+    room_submissions = db.query(Submission).join(Task).filter(Task.room_id == room.id).all()
     
-    for member in members:
-        # Calculate XP
-        submissions = db.query(Submission).filter(Submission.user_id == member.id).order_by(Submission.timestamp).all()
+    user_xp_map = defaultdict(int)
+    user_subs_by_day = defaultdict(lambda: defaultdict(list))
+    
+    for sub in room_submissions:
+        day = sub.timestamp.date()
+        user_subs_by_day[sub.user_id][day].append(sub)
         
-        # Group by day
-        total_xp = 0
-        submissions_by_day = {}
-        for s in submissions:
-            d = s.timestamp.date()
-            if d not in submissions_by_day:
-                submissions_by_day[d] = []
-            submissions_by_day[d].append(s)
-            
-        for d, subs in submissions_by_day.items():
+    for user_id, days_map in user_subs_by_day.items():
+        total_u_xp = 0
+        for day, subs in days_map.items():
             daily_base = sum(s.xp_awarded for s in subs)
             multiplier = get_daily_multiplier(len(subs))
-            total_xp += int(daily_base * multiplier)
-            
+            total_u_xp += int(daily_base * multiplier)
+        user_xp_map[user_id] = total_u_xp
+
+    # Also include room members who have 0 XP
+    members = db.query(User).join(RoomMember).filter(RoomMember.room_id == room.id).all()
+    
+    leaderboard = []
+    for member in members:
         leaderboard.append(LeaderboardEntry(
             user_id=member.id,
             username=member.username,
-            total_xp=total_xp,
+            email=member.email or "",
+            total_xp=user_xp_map[member.id],
             rank=0
         ))
         
@@ -132,6 +136,7 @@ def get_global_leaderboard(db: Session = Depends(get_db)):
         leaderboard.append(LeaderboardEntry(
             user_id=user.id,
             username=user.username,
+            email=user.email or "",
             total_xp=total_xp,
             rank=0
         ))

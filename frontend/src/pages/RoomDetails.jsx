@@ -3,7 +3,7 @@ import { useParams, Link } from "react-router-dom"
 import api from "../api"
 import { useAuth } from "../context/AuthContext"
 import { useApp } from "../context/AppContext"
-import { Trophy, Calendar, Upload, CheckCircle, Zap, Shield, Plus, Target, ArrowRight, ChevronRight, Map } from "lucide-react"
+import { Trophy, Calendar, Upload, CheckCircle, Zap, Shield, Plus, Target, ArrowRight, ChevronRight, Map, Mail } from "lucide-react"
 import { clsx } from "clsx"
 
 export function RoomDetails() {
@@ -194,7 +194,10 @@ export function RoomDetails() {
                                         <span className="text-3xl md:text-5xl font-black italic opacity-20 group-hover:opacity-100 group-hover:translate-x-4 transition-all">0{idx + 1}</span>
                                         <div>
                                             <p className="text-3xl md:text-5xl font-black italic uppercase tracking-tighter">{entry.username}</p>
-                                            <p className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-secondary group-hover:text-white/60 mt-2 italic">Specialized Tactical Rank</p>
+                                            <div className="flex items-center gap-3 md:gap-4 opacity-40 group-hover:opacity-100 transition-all mt-2">
+                                                <Mail size={12} className="text-secondary group-hover:text-white/60" />
+                                                <p className="text-[9px] md:text-[10px] font-black uppercase tracking-widest italic">{entry.email}</p>
+                                            </div>
                                         </div>
                                     </div>
                                     <div className="text-right relative z-10">
