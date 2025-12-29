@@ -198,6 +198,25 @@
   animation: scan-line 8s linear infinite;
 }
 
+@layer utilities {
+  .text-hollow {
+    -webkit-text-stroke: 1px white;
+    color: transparent;
+  }
+
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+
+  .backface-hidden {
+    backface-visibility: hidden;
+  }
+}
+
 /* Brighten Date Picker for Dark Mode */
 input[type="datetime-local"] {
   color-scheme: dark;

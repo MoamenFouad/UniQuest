@@ -79,9 +79,9 @@ export function Layout({ children }) {
                         <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center font-black text-2xl italic tracking-tighter shadow-[0_0_20px_hsla(var(--primary),0.3)] group-hover:scale-110 group-hover:rotate-6 transition-all">
                             UQ
                         </div>
-                        <div className="hidden lg:block overflow-hidden h-6">
-                            <span className="font-black text-2xl tracking-tighter uppercase italic block group-hover:-translate-y-full transition-transform duration-500">UniQuest</span>
-                            <span className="font-black text-2xl tracking-tighter uppercase italic block text-primary transition-transform duration-500">Origin_Hub</span>
+                        <div className="hidden lg:block h-7 overflow-hidden">
+                            <span className="font-black text-2xl tracking-tighter uppercase italic block group-hover:-translate-y-full transition-all duration-500 pr-4">UniQuest</span>
+                            <span className="font-black text-2xl tracking-tighter uppercase italic block text-hollow transition-all duration-500 group-hover:-translate-y-full pr-4">UniQuest</span>
                         </div>
                     </Link>
                 </div>
