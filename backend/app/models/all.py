@@ -18,6 +18,7 @@ class User(Base):
     student_id = Column(String, index=True, nullable=True)
     firebase_uid = Column(String, unique=True, index=True, nullable=True)
     provider = Column(String, default="traditional") # "traditional", "google", "facebook", "apple"
+    profile_picture = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     submissions = relationship("Submission", back_populates="user")

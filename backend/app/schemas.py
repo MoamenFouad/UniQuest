@@ -31,6 +31,7 @@ class UserResponse(UserBase):
     id: int
     provider: str
     firebase_uid: Optional[str] = None
+    profile_picture: Optional[str] = None
     created_at: datetime
 
     class Config:

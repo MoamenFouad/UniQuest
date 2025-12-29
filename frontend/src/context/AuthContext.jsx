@@ -77,7 +77,12 @@ export const AuthProvider = ({ children }) => {
     };
 
     const updateProfile = async (userData) => {
-        const { data } = await api.put('/auth/me', userData);
+        // Check if userData is FormData (for file uploads)
+        const config = userData instanceof FormData
+            ? { headers: { 'Content-Type': 'multipart/form-data' } }
+            : {};
+
+        const { data } = await api.put('/auth/me', userData, config);
         setUser(data);
     };
 

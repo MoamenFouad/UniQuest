@@ -2,7 +2,8 @@ import { useState, useEffect } from "react"
 import { useAuth } from "../context/AuthContext"
 import { useApp } from "../context/AppContext"
 import { Link, useLocation } from "react-router-dom"
-import { LayoutDashboard, Users, Trophy, LogOut, Menu, X, ChevronRight, Settings, Zap, Map, Shield, Target, Eye, EyeOff } from "lucide-react"
+import { LayoutDashboard, Users, Trophy, LogOut, Menu, X, ChevronRight, Settings, Zap, Map, Shield, Target, Eye, EyeOff, FileText, Lock } from "lucide-react"
+import { GitHubIcon, DiscordIcon, TwitterXIcon } from "./BrandIcons"
 import { clsx } from "clsx"
 
 export function Layout({ children }) {
@@ -50,18 +51,38 @@ export function Layout({ children }) {
         setPrefsError("")
         setPrefsSuccess("")
         try {
-            const dataToUpdate = {}
-            if (editData.username !== user.username) dataToUpdate.username = editData.username
-            if (editData.email !== user.email) dataToUpdate.email = editData.email
-            if (editData.student_id !== user.student_id) dataToUpdate.student_id = editData.student_id
-            if (editData.password) {
-                if (!editData.old_password) { setPrefsError("Old password required"); return }
-                if (editData.password !== editData.confirm_password) { setPrefsError("Passwords mismatch"); return }
-                dataToUpdate.old_password = editData.old_password
-                dataToUpdate.password = editData.password
-                dataToUpdate.confirm_password = editData.confirm_password
+            // If there's a profile picture, use FormData
+            if (profilePicture) {
+                const formData = new FormData()
+                formData.append('profile_picture', profilePicture)
+                if (editData.username !== user.username) formData.append('username', editData.username)
+                if (editData.email !== user.email) formData.append('email', editData.email)
+                if (editData.student_id !== user.student_id) formData.append('student_id', editData.student_id)
+                if (editData.password) {
+                    if (!editData.old_password) { setPrefsError("Old password required"); return }
+                    if (editData.password !== editData.confirm_password) { setPrefsError("Passwords mismatch"); return }
+                    formData.append('old_password', editData.old_password)
+                    formData.append('password', editData.password)
+                    formData.append('confirm_password', editData.confirm_password)
+                }
+                await updateProfile(formData)
+                setProfilePicture(null)
+                setProfilePicturePreview(null)
+            } else {
+                // Regular JSON update
+                const dataToUpdate = {}
+                if (editData.username !== user.username) dataToUpdate.username = editData.username
+                if (editData.email !== user.email) dataToUpdate.email = editData.email
+                if (editData.student_id !== user.student_id) dataToUpdate.student_id = editData.student_id
+                if (editData.password) {
+                    if (!editData.old_password) { setPrefsError("Old password required"); return }
+                    if (editData.password !== editData.confirm_password) { setPrefsError("Passwords mismatch"); return }
+                    dataToUpdate.old_password = editData.old_password
+                    dataToUpdate.password = editData.password
+                    dataToUpdate.confirm_password = editData.confirm_password
+                }
+                await updateProfile(dataToUpdate)
             }
-            await updateProfile(dataToUpdate)
             setPrefsSuccess("Identity updated successfully!")
             setIsEditing(false)
         } catch (err) { setPrefsError(err.response?.data?.detail || "Update failed") }
@@ -245,17 +266,35 @@ export function Layout({ children }) {
                         <div className="space-y-6">
                             <p className="text-[10px] font-black uppercase text-primary tracking-[0.5em] italic">Resources</p>
                             <div className="flex flex-col gap-4 text-sm font-black italic text-white/40">
-                                <a href="#" className="hover:text-white transition-colors">GitHub</a>
-                                <a href="#" className="hover:text-white transition-colors">Discord</a>
-                                <a href="#" className="hover:text-white transition-colors">Twitter</a>
+                                <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors flex items-center gap-2 group">
+                                    <GitHubIcon className="w-4 h-4 group-hover:text-primary transition-colors" />
+                                    GitHub
+                                </a>
+                                <a href="https://discord.com" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors flex items-center gap-2 group">
+                                    <DiscordIcon className="w-4 h-4 group-hover:text-primary transition-colors" />
+                                    Discord
+                                </a>
+                                <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors flex items-center gap-2 group">
+                                    <TwitterXIcon className="w-4 h-4 group-hover:text-primary transition-colors" />
+                                    Twitter
+                                </a>
                             </div>
                         </div>
                         <div className="space-y-6 text-right md:text-left">
                             <p className="text-[10px] font-black uppercase text-primary tracking-[0.5em] italic">Legal</p>
                             <div className="flex flex-col gap-4 text-sm font-black italic text-white/40">
-                                <a href="#" className="hover:text-white transition-colors">Privacy</a>
-                                <a href="#" className="hover:text-white transition-colors">Terms</a>
-                                <a href="#" className="hover:text-white transition-colors">Security</a>
+                                <a href="#" className="hover:text-white transition-colors flex items-center gap-2 justify-end md:justify-start group">
+                                    <Shield size={16} className="group-hover:text-primary transition-colors" />
+                                    Privacy
+                                </a>
+                                <a href="#" className="hover:text-white transition-colors flex items-center gap-2 justify-end md:justify-start group">
+                                    <FileText size={16} className="group-hover:text-primary transition-colors" />
+                                    Terms
+                                </a>
+                                <a href="#" className="hover:text-white transition-colors flex items-center gap-2 justify-end md:justify-start group">
+                                    <Lock size={16} className="group-hover:text-primary transition-colors" />
+                                    Security
+                                </a>
                             </div>
                         </div>
                         <div className="hidden md:block">

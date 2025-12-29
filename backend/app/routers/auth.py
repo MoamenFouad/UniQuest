@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, status, Request, UploadFile, File
 from sqlalchemy.orm import Session
+from typing import Optional
 from ..database import get_db
 from ..models import User
 from ..schemas import UserCreate, UserResponse, UserLogin, UserUpdate, FirebaseLogin
@@ -121,37 +122,68 @@ def get_me(user: User = Depends(get_current_user)):
     return user
 
 @router.put("/me", response_model=UserResponse)
-def update_me(user_update: UserUpdate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    if user_update.username:
+async def update_me(
+    username: Optional[str] = None,
+    email: Optional[str] = None,
+    student_id: Optional[str] = None,
+    old_password: Optional[str] = None,
+    password: Optional[str] = None,
+    confirm_password: Optional[str] = None,
+    profile_picture: Optional[UploadFile] = File(None),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    import os
+    import uuid
+    from pathlib import Path
+    
+    if username:
         # Check if username exists
-        existing_user = db.query(User).filter(User.username == user_update.username, User.id != current_user.id).first()
+        existing_user = db.query(User).filter(User.username == username, User.id != current_user.id).first()
         if existing_user:
             raise HTTPException(status_code=400, detail="Username already taken")
-        current_user.username = user_update.username
+        current_user.username = username
         
-    if user_update.email:
-        existing_user = db.query(User).filter(User.email == user_update.email, User.id != current_user.id).first()
+    if email:
+        existing_user = db.query(User).filter(User.email == email, User.id != current_user.id).first()
         if existing_user:
             raise HTTPException(status_code=400, detail="Email already taken")
-        current_user.email = user_update.email
+        current_user.email = email
         
-    if user_update.student_id is not None:
-        current_user.student_id = user_update.student_id
+    if student_id is not None:
+        current_user.student_id = student_id
         
-    if user_update.password:
+    if password:
         # If user has a password, verify old one
         if current_user.hashed_password:
-            if not user_update.old_password:
+            if not old_password:
                 raise HTTPException(status_code=400, detail="Old password is required to set a new password")
-            if not verify_password(user_update.old_password, current_user.hashed_password):
+            if not verify_password(old_password, current_user.hashed_password):
                 raise HTTPException(status_code=400, detail="Incorrect old password")
         
-        if user_update.password != user_update.confirm_password:
+        if password != confirm_password:
             raise HTTPException(status_code=400, detail="New passwords do not match")
             
-        current_user.hashed_password = get_password_hash(user_update.password)
-        # If they set a password, they are no longer purely social if they choose
-        # (keeping provider as is for tracking)
+        current_user.hashed_password = get_password_hash(password)
+        
+    # Handle profile picture upload
+    if profile_picture:
+        # Create uploads directory if it doesn't exist
+        upload_dir = Path("uploads/profile_pictures")
+        upload_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Generate unique filename
+        file_extension = os.path.splitext(profile_picture.filename)[1]
+        unique_filename = f"{uuid.uuid4()}{file_extension}"
+        file_path = upload_dir / unique_filename
+        
+        # Save the file
+        with open(file_path, "wb") as buffer:
+            content = await profile_picture.read()
+            buffer.write(content)
+        
+        # Store relative path in database
+        current_user.profile_picture = f"/uploads/profile_pictures/{unique_filename}"
         
     db.commit()
     db.refresh(current_user)
