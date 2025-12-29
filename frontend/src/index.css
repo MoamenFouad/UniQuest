@@ -181,7 +181,7 @@
 .animate-marquee {
   display: flex;
   width: max-content;
-  animation: marquee 100s linear infinite;
+  animation: marquee 15s linear infinite;
 }
 
 @keyframes scan-line {
@@ -196,4 +196,20 @@
 
 .animate-scan {
   animation: scan-line 8s linear infinite;
+}
+
+/* Brighten Date Picker for Dark Mode */
+input[type="datetime-local"] {
+  color-scheme: dark;
+}
+
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.8;
+  cursor: pointer;
+}
+
+input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+  filter: invert(1) drop-shadow(0 0 5px hsla(var(--primary), 0.5));
 }

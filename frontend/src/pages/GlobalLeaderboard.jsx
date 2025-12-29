@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import api from "../api"
 import { clsx } from "clsx"
-import { Trophy, Zap, Shield, Search, TrendingUp, Map } from "lucide-react"
+import { Trophy, Zap, Shield, Search, TrendingUp, Map, Mail } from "lucide-react"
 
 export function GlobalLeaderboard() {
     const [leaderboard, setLeaderboard] = useState([])
@@ -38,14 +38,14 @@ export function GlobalLeaderboard() {
             <section className="space-y-8 md:space-y-12 relative z-10 px-6 md:px-12">
                 <div className="flex items-center gap-4 md:gap-6">
                     <div className="h-[2px] w-12 md:w-24 bg-primary" />
-                    <span className="text-primary font-black uppercase tracking-[0.4em] text-[10px] italic">Operational Statistics_Global_V2.5</span>
+                    <span className="text-primary font-black uppercase tracking-[0.4em] text-[10px] italic">kol shahr feeh gift lel top preformer</span>
                 </div>
-                <h1 className="text-6xl md:text-[10rem] lg:text-[12rem] font-black text-white italic uppercase tracking-[calc(-0.06em)] leading-[0.9]">
-                    THE <br /> <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary via-white to-secondary bg-[length:200%_auto] animate-[gradient_10s_linear_infinite]">COUNCIL.</span>
+                <h1 className="text-5xl md:text-[7rem] lg:text-[9rem] font-black text-white italic uppercase tracking-[calc(-0.06em)] leading-[0.9] pr-16 overflow-visible">
+                    THE <br /> <span className="inline-block bg-clip-text text-transparent bg-gradient-to-r from-primary via-white to-secondary bg-[length:200%_auto] animate-[gradient_10s_linear_infinite] pr-4">LEADERBOARD.&nbsp;</span>
                 </h1>
                 <div className="max-w-3xl">
                     <p className="text-white/40 text-xl md:text-3xl font-medium italic leading-tight">
-                        Real-time recognition of elite operators within the global sectors. Forge your presence in the high-stakes council.
+                        Kosh shoof meen da7e7 el app.
                     </p>
                 </div>
             </section>
@@ -72,8 +72,8 @@ export function GlobalLeaderboard() {
                                     {entry.username}
                                 </h4>
                                 <div className="flex items-center gap-3 md:gap-4 opacity-30 group-hover:opacity-100 transition-all">
-                                    <Shield size={12} className="text-primary" />
-                                    <span className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.4em] italic text-primary">Specialized Unit_Verified</span>
+                                    <Mail size={12} className="text-primary" />
+                                    <span className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.4em] italic text-primary">{entry.email}</span>
                                 </div>
                             </div>
                         </div>

@@ -44,7 +44,8 @@ export const AppProvider = ({ children }) => {
         lastSubmission: dashboardData.recent_activities?.[0] ? {
             title: dashboardData.recent_activities[0].quest_title,
             date: new Date(dashboardData.recent_activities[0].timestamp)
-        } : null
+        } : null,
+        rank: dashboardData.global_rank
     } : {
         xp: 0,
         level: 1,

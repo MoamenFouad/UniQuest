@@ -59,15 +59,24 @@ export function Rooms() {
     )
 
     return (
-        <div className="space-y-8">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-white">Your Quest Rooms</h1>
-                    <p className="text-slate-400">Join a realm or create your own adventure.</p>
+        <div className="space-y-12 md:space-y-16 bg-black pb-32 md:pb-48 relative overflow-hidden px-6 md:px-12 lg:px-16">
+            {/* Studio Grid Background */}
+            <div className="absolute inset-0 grid-overlay opacity-[0.05] pointer-events-none" />
+
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-8 relative z-10 pt-4">
+                <div className="space-y-6">
+                    <div className="flex items-center gap-4 md:gap-6">
+                        <div className="h-[2px] w-12 md:w-24 bg-primary" />
+                        <span className="text-primary font-black uppercase tracking-[0.4em] text-[10px] italic">Active Realm Directory_V2.5</span>
+                    </div>
+                    <div>
+                        <h1 className="text-3xl md:text-5xl lg:text-6xl font-black text-white italic uppercase tracking-tighter leading-none">Your Quest Rooms</h1>
+                        <p className="text-white/60 text-sm md:text-base font-medium italic mt-4 max-w-xl">Join a realm or create your own adventure within the global interface.</p>
+                    </div>
                 </div>
-                <div className="flex gap-4">
-                    <Button variant="outline" onClick={() => setShowJoin(!showJoin)}>Join Room</Button>
-                    <Button onClick={() => setShowCreate(!showCreate)}>Create Room</Button>
+                <div className="flex gap-4 self-start sm:self-center">
+                    <Button variant="outline" onClick={() => setShowJoin(!showJoin)} className="px-8 py-4 border-white/10 text-white font-black uppercase tracking-widest italic rounded-2xl hover:bg-white/5 transition-all">Join Room</Button>
+                    <Button onClick={() => setShowCreate(!showCreate)} className="px-8 py-4 bg-primary text-white font-black uppercase tracking-widest italic rounded-2xl shadow-[0_0_20px_hsla(var(--primary),0.3)] hover:scale-105 transition-all">Create Room</Button>
                 </div>
             </div>
 

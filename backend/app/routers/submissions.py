@@ -28,6 +28,12 @@ async def submit_task(
     if existing:
         raise HTTPException(status_code=409, detail="Already submitted")
 
+    # Check expiration
+    if task.deadline:
+        now = datetime.now(task.deadline.tzinfo) if task.deadline.tzinfo else datetime.utcnow()
+        if task.deadline < now:
+            raise HTTPException(status_code=403, detail="Mission expired")
+
     # Save file
     filename = f"{uuid.uuid4()}_{file.filename}"
     file_path = os.path.join(settings.UPLOAD_DIR, filename)
@@ -35,11 +41,14 @@ async def submit_task(
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
         
+    # Enforce XP values based on task type
+    xp_awarded = 50 if task.type == "lecture" else 25
+    
     submission = Submission(
         task_id=task_id,
         user_id=user.id,
         file_path=filename,
-        xp_awarded=task.xp_value
+        xp_awarded=xp_awarded
     )
     
     db.add(submission)

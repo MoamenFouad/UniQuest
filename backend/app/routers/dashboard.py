@@ -112,45 +112,54 @@ def get_dashboard(user: User = Depends(get_current_user), db: Session = Depends(
                 timestamp=submission.timestamp
             ))
     
-    # Global leaderboard (top 10 users)
-    all_users = db.query(User).all()
-    leaderboard_data = []
+    # Optimized Global Leaderboard (Top 10)
+    # Fetch all submissions to calculate XP globally
+    # In a real production app with millions of subs, we'd use a more specialized query or cached stats.
+    # For this project, fetching all subs is acceptable and much faster than N+1 queries.
     
-    for u in all_users:
-        u_submissions = db.query(Submission).filter(Submission.user_id == u.id).all()
-        
-        if not u_submissions:
-            continue
-        
-        u_xp = 0
-        u_subs_by_day = defaultdict(list)
-        
-        for sub in u_submissions:
-            day = sub.timestamp.date()
-            u_subs_by_day[day].append(sub)
-        
-        for day, subs in u_subs_by_day.items():
+    all_submissions = db.query(Submission).order_by(Submission.user_id, Submission.timestamp).all()
+    user_xp_map = defaultdict(int)
+    user_subs_by_day = defaultdict(lambda: defaultdict(list))
+    
+    for sub in all_submissions:
+        day = sub.timestamp.date()
+        user_subs_by_day[sub.user_id][day].append(sub)
+    
+    for user_id, days_map in user_subs_by_day.items():
+        total_u_xp = 0
+        for day, subs in days_map.items():
             daily_base = sum(s.xp_awarded for s in subs)
             multiplier = get_daily_multiplier(len(subs))
-            u_xp += int(daily_base * multiplier)
+            total_u_xp += int(daily_base * multiplier)
+        user_xp_map[user_id] = total_u_xp
         
-        leaderboard_data.append({
-            'user_id': u.id,
-            'username': u.username,
-            'total_xp': u_xp
-        })
+    # Get user details for the top XP earners
+    # Limit to top 20 first to be safe, then sort and take top 10
+    sorted_user_ids = sorted(user_xp_map.keys(), key=lambda uid: user_xp_map[uid], reverse=True)
+    top_u_ids = sorted_user_ids[:10]
     
-    # Sort by XP and assign ranks
-    leaderboard_data.sort(key=lambda x: x['total_xp'], reverse=True)
-    top_adventurers = [
-        LeaderboardEntry(
-            user_id=entry['user_id'],
-            username=entry['username'],
-            total_xp=entry['total_xp'],
-            rank=idx + 1
-        )
-        for idx, entry in enumerate(leaderboard_data[:10])
-    ]
+    top_users = db.query(User).filter(User.id.in_(top_u_ids)).all()
+    user_info = {u.id: {"username": u.username, "email": u.email} for u in top_users}
+    
+    top_adventurers = []
+    for idx, uid in enumerate(top_u_ids):
+        if uid in user_info:
+            top_adventurers.append(LeaderboardEntry(
+                user_id=uid,
+                username=user_info[uid]["username"],
+                email=user_info[uid]["email"],
+                total_xp=user_xp_map[uid],
+                rank=idx + 1
+            ))
+            
+    # Calculate current user's global rank
+    global_rank = None
+    if user.id in user_xp_map:
+        # Find index in sorted list
+        global_rank = sorted_user_ids.index(user.id) + 1
+    else:
+        # If user has no submissions, they are at the end
+        global_rank = len(sorted_user_ids) + 1
     
     return DashboardResponse(
         total_xp=total_xp,
@@ -160,6 +169,7 @@ def get_dashboard(user: User = Depends(get_current_user), db: Session = Depends(
         xp_by_day=xp_by_day_data[-30:],  # Last 30 days
         xp_by_room=xp_by_room_data,
         recent_activities=recent_activities,
-        top_adventurers=top_adventurers
+        top_adventurers=top_adventurers,
+        global_rank=global_rank
     )
 

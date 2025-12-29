@@ -55,7 +55,7 @@ class TaskBase(BaseModel):
     title: str
     description: Optional[str] = None
     type: TaskType
-    xp_value: int
+    xp_value: Optional[int] = None
 
 class TaskCreate(TaskBase):
     deadline: Optional[datetime] = None
@@ -90,6 +90,7 @@ class SubmissionResponse(BaseModel):
 class LeaderboardEntry(BaseModel):
     user_id: int
     username: str
+    email: str
     total_xp: int
     rank: int
 
@@ -118,3 +119,4 @@ class DashboardResponse(BaseModel):
     xp_by_room: List[RoomXP]
     recent_activities: List[ActivityEntry]
     top_adventurers: List[LeaderboardEntry]
+    global_rank: Optional[int] = None

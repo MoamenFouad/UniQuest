@@ -15,7 +15,7 @@ export function RoomDetails() {
     const [leaderboard, setLeaderboard] = useState([])
     const [activeTab, setActiveTab] = useState("tasks")
     const [isAdmin, setIsAdmin] = useState(false)
-    const [newTask, setNewTask] = useState({ title: "", type: "lecture", xp_value: 100, deadline: "" })
+    const [newTask, setNewTask] = useState({ title: "", type: "lecture", deadline: "" })
     const [uploading, setUploading] = useState(null)
     const [creating, setCreating] = useState(false)
 
@@ -48,12 +48,18 @@ export function RoomDetails() {
     const handleCreateTask = async (e) => {
         e.preventDefault()
         if (!newTask.title || !newTask.deadline) return
+
         setCreating(true)
         try {
-            const deadlineDate = new Date(newTask.deadline)
-            const { data: createdTask } = await api.post(`/rooms/${code}/tasks/`, { ...newTask, deadline: deadlineDate.toISOString() })
+            const payload = { ...newTask }
+            if (payload.deadline) payload.deadline = new Date(payload.deadline).toISOString()
+            // Remove start_time and end_time if they exist from previous state
+            delete payload.start_time
+            delete payload.end_time
+
+            const { data: createdTask } = await api.post(`/rooms/${code}/tasks/`, payload)
             setTasks(prev => [createdTask, ...prev])
-            setNewTask({ title: "", type: "lecture", xp_value: 100, deadline: "" })
+            setNewTask({ title: "", type: "lecture", deadline: "" })
         } catch (err) { alert(err.response?.data?.detail || "Failed to create task") } finally { setCreating(false) }
     }
 
@@ -155,6 +161,11 @@ export function RoomDetails() {
                                             <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-primary/20 flex items-center justify-center group-hover:bg-black/10"><CheckCircle size={20} md:size={24} /></div>
                                             Verified Deployment
                                         </div>
+                                    ) : task.is_expired ? (
+                                        <div className="flex items-center gap-3 md:gap-4 font-black italic uppercase text-[11px] md:text-[12px] tracking-widest text-white/40 group-hover:text-black">
+                                            <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-black/10"><Zap size={20} md:size={24} /></div>
+                                            Directive Expired
+                                        </div>
                                     ) : (
                                         <label className="cursor-pointer group/label">
                                             <input type="file" className="hidden" onChange={(e) => handleFileUpload(task.id, e.target.files[0])} disabled={uploading === task.id} />
@@ -207,8 +218,25 @@ export function RoomDetails() {
                                     <input value={newTask.title} onChange={(e) => setNewTask({ ...newTask, title: e.target.value })} className="w-full bg-black/40 border border-white/10 p-5 md:p-6 rounded-2xl text-white font-black italic uppercase text-xs md:text-sm placeholder:text-white/10 focus:border-primary transition-all" placeholder="MISSION_CODE_NAME" />
                                 </div>
                                 <div className="space-y-3">
-                                    <label className="text-[11px] font-black text-primary uppercase tracking-[0.5em] ml-2 italic">Time Deadline</label>
-                                    <input type="datetime-local" value={newTask.deadline} onChange={(e) => setNewTask({ ...newTask, deadline: e.target.value })} className="w-full bg-black/40 border border-white/10 p-5 md:p-6 rounded-2xl text-white font-black italic uppercase text-xs md:text-sm focus:border-primary transition-all" />
+                                    <label className="text-[11px] font-black text-primary uppercase tracking-[0.5em] ml-2 italic">Objective Type</label>
+                                    <select
+                                        value={newTask.type}
+                                        onChange={(e) => setNewTask({ ...newTask, type: e.target.value })}
+                                        className="w-full bg-black/40 border border-white/10 px-5 py-5 md:px-6 md:py-6 rounded-2xl text-white font-black italic uppercase text-xs md:text-sm focus:border-primary transition-all appearance-none text-center"
+                                    >
+                                        <option value="lecture">Lecture</option>
+                                        <option value="assignment">Assignment</option>
+                                    </select>
+                                </div>
+
+                                <div className="space-y-3">
+                                    <label className="text-[11px] font-black text-primary uppercase tracking-[0.5em] ml-2 italic">Operation Deadline</label>
+                                    <input
+                                        type="datetime-local"
+                                        value={newTask.deadline}
+                                        onChange={(e) => setNewTask({ ...newTask, deadline: e.target.value })}
+                                        className="w-full bg-white/10 border border-white/20 p-5 md:p-6 rounded-2xl text-white font-black italic uppercase text-xs md:text-sm focus:border-primary transition-all color-scheme-dark"
+                                    />
                                 </div>
                                 <button type="submit" disabled={creating} className="w-full py-6 md:py-8 bg-primary text-white font-black uppercase text-[10px] md:text-xs tracking-[0.5em] italic rounded-full shadow-[0_0_40px_hsla(var(--primary),0.3)] hover:scale-105 active:scale-95 transition-all">
                                     {creating ? "Initing_Deployment..." : "Deploy Mission"}

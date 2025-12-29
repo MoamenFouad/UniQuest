@@ -15,12 +15,8 @@ export function Dashboard() {
     const topLeaderboard = leaderboard.slice(0, 5)
 
     const universityQuotes = [
-        "The only way to learn a new programming language is by writing programs in it. — Dennis Ritchie",
-        "Code is like humor. When you have to explain it, it’s bad. — Cory House",
-        "Excellence is not a skill. It is an attitude. — Ralph Marston",
-        "The best way to predict the future is to invent it. — Alan Kay",
-        "Knowledge is power. Information is liberating. Education is the premise of progress. — Kofi Annan",
-        "In theory, there is no difference between theory and practice. But, in practice, there is. — Jan L.A. van de Snepscheut"
+        "khosh e3ml upload besor3a el streak hatroo7",
+        "bs ba2olak eh kont 7adart el mo7adra w akhadt XP"
     ]
 
     useEffect(() => {
@@ -108,7 +104,12 @@ export function Dashboard() {
                         </div>
 
                         <div className="w-72">
-                            <button className="w-full py-8 bg-white/5 border border-white/10 text-white font-black uppercase tracking-[0.4em] text-[10px] italic rounded-full hover:bg-white/10 transition-all border-b-2 border-primary/20 hover:scale-105 active:scale-95 hover:shadow-[0_0_30px_rgba(99,102,241,0.2)]">My Dashboard</button>
+                            <button
+                                onClick={() => document.getElementById('operational-grid')?.scrollIntoView({ behavior: 'smooth' })}
+                                className="w-full py-8 bg-white/5 border border-white/10 text-white font-black uppercase tracking-[0.4em] text-[10px] italic rounded-full hover:bg-white/10 transition-all border-b-2 border-primary/20 hover:scale-105 active:scale-95 hover:shadow-[0_0_30px_rgba(99,102,241,0.2)]"
+                            >
+                                My Dashboard
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -135,7 +136,7 @@ export function Dashboard() {
             </section>
 
             {/* 3. Operational Grid */}
-            <section className="gsap-reveal max-w-[1800px] mx-auto p-8 md:p-24 lg:p-32 grid grid-cols-1 lg:grid-cols-12 gap-12 relative z-[10] items-start">
+            <section id="operational-grid" className="gsap-reveal max-w-[1800px] mx-auto p-8 md:p-24 lg:p-32 grid grid-cols-1 lg:grid-cols-12 gap-12 relative z-[10] items-start">
                 {/* Left Side: Stats & Personal Meta */}
                 <div className="lg:col-span-7 space-y-12 md:space-y-16">
                     <div className="space-y-4 md:space-y-6">
