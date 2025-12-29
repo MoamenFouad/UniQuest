@@ -181,7 +181,7 @@
 .animate-marquee {
   display: flex;
   width: max-content;
-  animation: marquee 15s linear infinite;
+  animation: marquee 40s linear infinite;
 }
 
 @keyframes scan-line {
