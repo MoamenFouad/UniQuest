@@ -43,6 +43,20 @@ def join_room(code: str, user: User = Depends(get_current_user), db: Session = D
     db.commit()
     return {"message": "Joined successfully", "room_id": room.id}
 
+@router.post("/{code}/leave")
+def leave_room(code: str, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    room = db.query(Room).filter(Room.code == code).first()
+    if not room:
+        raise HTTPException(status_code=404, detail="Room not found")
+    
+    member = db.query(RoomMember).filter(RoomMember.user_id == user.id, RoomMember.room_id == room.id).first()
+    if not member:
+        raise HTTPException(status_code=400, detail="You are not a member of this room")
+        
+    db.delete(member)
+    db.commit()
+    return {"message": "Left room successfully"}
+
 @router.get("/my", response_model=List[RoomResponse])
 def get_my_rooms(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     return [member.room for member in user.room_memberships]

@@ -115,7 +115,7 @@ export function Layout({ children }) {
                                 to={item.path}
                                 className={clsx(
                                     "text-[10px] font-black uppercase tracking-[0.5em] transition-all hover:text-primary italic",
-                                    location.pathname === item.path ? "text-primary flex items-center gap-2" : "text-white/40"
+                                    location.pathname === item.path ? "text-primary flex items-center gap-2" : "text-white/60"
                                 )}
                             >
                                 {location.pathname === item.path && <div className="w-1 h-1 rounded-full bg-primary animate-pulse shadow-[0_0_5px_hsla(var(--primary),0.8)]" />}
@@ -215,7 +215,7 @@ export function Layout({ children }) {
                                     </div>
                                 </div>
                                 <h3 className="text-2xl font-bold text-white mb-2">{user?.username}</h3>
-                                <p className="text-sm font-medium text-white/40 mb-6">{user?.email}</p>
+                                <p className="text-sm font-medium text-white/60 mb-6">{user?.email}</p>
                                 <span className="px-4 py-2 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-widest border border-primary/20">
                                     Student
                                 </span>
@@ -232,7 +232,7 @@ export function Layout({ children }) {
                                 </div>
                                 <div>
                                     <p className="font-bold text-white text-sm">Profile Settings</p>
-                                    <p className="text-xs text-white/40 mt-1">Update personal information</p>
+                                    <p className="text-xs text-white/60 mt-1">Update personal information</p>
                                 </div>
                                 <ChevronRight size={16} className="ml-auto text-white/20 group-hover/item:text-white transition-colors" />
                             </button>
@@ -260,12 +260,12 @@ export function Layout({ children }) {
                 <div className="max-w-[1600px] mx-auto flex flex-col lg:flex-row justify-between items-end gap-16 md:gap-20">
                     <div className="space-y-8">
                         <span className="font-black text-6xl italic tracking-tighter">UQ<span className="text-primary">.</span></span>
-                        <p className="text-white/30 font-black uppercase tracking-[0.4em] text-[10px] italic max-w-sm leading-relaxed">Empowering students with advanced learning tools v2.5.0</p>
+                        <p className="text-white/60 font-black uppercase tracking-[0.4em] text-[10px] italic max-w-sm leading-relaxed">Empowering students with advanced learning tools v2.5.0</p>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-16 lg:gap-32 w-full lg:w-auto">
                         <div className="space-y-6">
                             <p className="text-[10px] font-black uppercase text-primary tracking-[0.5em] italic">Resources</p>
-                            <div className="flex flex-col gap-4 text-sm font-black italic text-white/40">
+                            <div className="flex flex-col gap-4 text-sm font-black italic text-white/60">
                                 <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors flex items-center gap-2 group">
                                     <GitHubIcon className="w-4 h-4 group-hover:text-primary transition-colors" />
                                     GitHub
@@ -282,7 +282,7 @@ export function Layout({ children }) {
                         </div>
                         <div className="space-y-6 text-right md:text-left">
                             <p className="text-[10px] font-black uppercase text-primary tracking-[0.5em] italic">Legal</p>
-                            <div className="flex flex-col gap-4 text-sm font-black italic text-white/40">
+                            <div className="flex flex-col gap-4 text-sm font-black italic text-white/60">
                                 <a href="#" className="hover:text-white transition-colors flex items-center gap-2 justify-end md:justify-start group">
                                     <Shield size={16} className="group-hover:text-primary transition-colors" />
                                     Privacy
@@ -298,7 +298,7 @@ export function Layout({ children }) {
                             </div>
                         </div>
                         <div className="hidden md:block">
-                            <p className="text-[9px] font-black uppercase tracking-[0.5em] text-white/10 text-right">© 2025 UNIQUEST ORIGINS GLOBAL COUNCIL</p>
+                            <p className="text-[9px] font-black uppercase tracking-[0.5em] text-white/60 text-right">© 2025 UNIQUEST ORIGINS GLOBAL COUNCIL</p>
                         </div>
                     </div>
                 </div>

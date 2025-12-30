@@ -58,10 +58,32 @@ export function Rooms() {
         </div>
     )
 
+    const GooeyButton = ({ children, onClick, className }) => (
+        <button className={`c-button c-button--gooey ${className}`} onClick={onClick}>
+            {children}
+            <span className="c-button__blobs">
+                <div></div>
+                <div></div>
+                <div></div>
+            </span>
+        </button>
+    )
+
     return (
         <div className="space-y-12 md:space-y-16 bg-black pb-32 md:pb-48 relative overflow-hidden px-6 md:px-12 lg:px-16">
             {/* Studio Grid Background */}
             <div className="absolute inset-0 grid-overlay opacity-[0.05] pointer-events-none" />
+
+            {/* Goo Filter SVG */}
+            <svg style={{ visibility: 'hidden', position: 'absolute' }} width="0" height="0" version="1.1" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <filter id="goo">
+                        <feGaussianBlur in="SourceGraphic" result="blur" stdDeviation="10" />
+                        <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7" result="goo" />
+                        <feComposite in2="goo" in="SourceGraphic" result="mix" />
+                    </filter>
+                </defs>
+            </svg>
 
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-8 relative z-10 pt-4">
                 <div className="space-y-6">
@@ -70,30 +92,30 @@ export function Rooms() {
                         <span className="text-primary font-black uppercase tracking-[0.4em] text-[10px] italic">Active Realm Directory_V2.5</span>
                     </div>
                     <div>
-                        <h1 className="text-3xl md:text-5xl lg:text-6xl font-black text-white italic uppercase tracking-tighter leading-none">Your Quest Rooms</h1>
-                        <p className="text-white/60 text-sm md:text-base font-medium italic mt-4 max-w-xl">Join a realm or create your own adventure within the global interface.</p>
+                        <h1 className="text-5xl md:text-7xl lg:text-[7rem] font-black text-white italic uppercase tracking-tighter leading-none mb-2">YOUR QUEST ROOMS</h1>
+                        <p className="text-white/60 text-sm md:text-base font-medium italic max-w-xl">Join a realm or create your own adventure within the global interface.</p>
                     </div>
                 </div>
                 <div className="flex gap-4 self-start sm:self-center">
-                    <Button variant="outline" onClick={() => setShowJoin(!showJoin)} className="px-8 py-4 border-white/10 text-white font-black uppercase tracking-widest italic rounded-2xl hover:bg-white/5 transition-all">Join Room</Button>
-                    <Button onClick={() => setShowCreate(!showCreate)} className="px-8 py-4 bg-primary text-white font-black uppercase tracking-widest italic rounded-2xl shadow-[0_0_20px_hsla(var(--primary),0.3)] hover:scale-105 transition-all">Create Room</Button>
+                    <GooeyButton onClick={() => setShowJoin(!showJoin)}>Join Room</GooeyButton>
+                    <GooeyButton onClick={() => setShowCreate(!showCreate)}>Create Room</GooeyButton>
                 </div>
             </div>
 
             {showCreate && (
-                <Card className="mb-6 animate-in slide-in-from-top-4 border-primary/20 bg-primary/5">
-                    <h3 className="font-bold mb-4 text-white">Create a New Room</h3>
-                    <form onSubmit={handleCreate} className="flex flex-col sm:flex-row gap-4">
+                <div className="mb-12 animate-in slide-in-from-top-4 border border-white/10 bg-white/[0.02] rounded-[3rem] p-12 relative overflow-hidden">
+                    <h3 className="text-5xl md:text-7xl font-black text-white italic uppercase tracking-tighter mb-8">ENTER A UNIQUE NAME FOR YOUR ROOM</h3>
+                    <form onSubmit={handleCreate} className="flex flex-col sm:flex-row gap-6 items-center">
                         <Input
                             value={newRoomName}
                             onChange={(e) => setNewRoomName(e.target.value)}
                             placeholder="Room Name (e.g. CS101)"
                             required
-                            className="flex-1"
+                            className="flex-1 bg-black/50 border border-white/20 text-white placeholder:text-white/60 text-lg p-8 rounded-2xl focus:border-primary transition-all font-medium"
                         />
-                        <Button type="submit">Create Realm</Button>
+                        <GooeyButton type="submit">Create Realm</GooeyButton>
                     </form>
-                </Card>
+                </div>
             )}
 
             {showJoin && (
@@ -107,7 +129,7 @@ export function Rooms() {
                             required
                             className="flex-1"
                         />
-                        <Button type="submit" variant="primary" className="bg-secondary hover:bg-secondary/90 shadow-secondary/20">Join Realm</Button>
+                        <GooeyButton type="submit">Join Realm</GooeyButton>
                     </form>
                 </Card>
             )}
@@ -120,7 +142,7 @@ export function Rooms() {
                                 <div className="p-3 bg-primary/10 rounded-xl text-primary group-hover:bg-primary group-hover:text-white transition-all duration-300">
                                     <Users size={24} />
                                 </div>
-                                <span className="text-xs font-mono bg-surface px-2 py-1 rounded text-slate-400 border border-border/50">
+                                <span className="text-xs font-mono bg-surface px-2 py-1 rounded text-white/60 border border-border/50">
                                     {room.code}
                                 </span>
                             </div>
@@ -135,11 +157,11 @@ export function Rooms() {
 
             {rooms.length === 0 && (
                 <div className="text-center py-24 bg-card border border-dashed border-border rounded-3xl">
-                    <div className="w-16 h-16 bg-surface rounded-full flex items-center justify-center mx-auto mb-4 text-slate-500">
+                    <div className="w-16 h-16 bg-surface rounded-full flex items-center justify-center mx-auto mb-4 text-white/60">
                         <Plus size={32} />
                     </div>
-                    <p className="text-slate-400 text-lg">No rooms found.</p>
-                    <p className="text-slate-600 mb-8">Create or join one to begin your first quest!</p>
+                    <p className="text-white/60 text-lg">No rooms found.</p>
+                    <p className="text-white/60 mb-8">Create or join one to begin your first quest!</p>
                 </div>
             )}
         </div>

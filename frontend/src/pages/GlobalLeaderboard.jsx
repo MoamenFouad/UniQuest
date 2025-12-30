@@ -44,7 +44,7 @@ export function GlobalLeaderboard() {
                     THE <br /> <span className="inline-block bg-clip-text text-transparent bg-gradient-to-r from-primary via-white to-secondary bg-[length:200%_auto] animate-[gradient_10s_linear_infinite] pr-4">LEADERBOARD.&nbsp;</span>
                 </h1>
                 <div className="max-w-3xl">
-                    <p className="text-white/40 text-xl md:text-3xl font-medium italic leading-tight">
+                    <p className="text-white/60 text-xl md:text-3xl font-medium italic leading-tight">
                         Kosh shoof meen da7e7 el app.
                     </p>
                 </div>
@@ -85,7 +85,7 @@ export function GlobalLeaderboard() {
                                     {entry.total_xp.toLocaleString()}
                                 </span>
                             </div>
-                            <span className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.5em] text-white/20 mt-2 md:mt-4 italic group-hover:text-secondary transition-colors">Combat Capability_XP</span>
+                            <span className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.5em] text-white/60 mt-2 md:mt-4 italic group-hover:text-secondary transition-colors">Combat Capability_XP</span>
                         </div>
                     </div>
                 ))}
@@ -93,13 +93,13 @@ export function GlobalLeaderboard() {
                 {leaderboard.length === 0 && (
                     <div className="p-24 md:p-48 text-center bg-black">
                         <Zap size={48} md:size={64} className="mx-auto mb-6 text-white/10" />
-                        <p className="text-white/20 font-black uppercase tracking-[0.6em] italic text-lg md:text-xl">Council Chamber Silent_Initialize Ops</p>
+                        <p className="text-white/60 font-black uppercase tracking-[0.6em] italic text-lg md:text-xl">Council Chamber Silent_Initialize Ops</p>
                     </div>
                 )}
             </section>
 
             {/* Tactical Meta Footer */}
-            <section className="flex flex-col md:flex-row justify-between items-center px-8 md:px-12 gap-6 md:gap-8 relative z-10 opacity-30 italic font-black uppercase text-[9px] md:text-[10px] tracking-[0.6em]">
+            <section className="flex flex-col md:flex-row justify-between items-center px-8 md:px-12 gap-6 md:gap-8 relative z-10 opacity-60 italic font-black uppercase text-[9px] md:text-[10px] tracking-[0.6em]">
                 <div className="flex items-center gap-4"><div className="w-2 h-2 rounded-full bg-primary animate-ping" /> Synchronized Processing_Active</div>
                 <div className="flex items-center gap-6 md:gap-8">
                     <span>Active Units: {leaderboard.length.toLocaleString()}</span>

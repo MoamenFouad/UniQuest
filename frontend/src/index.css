@@ -198,6 +198,43 @@
   animation: scan-line 8s linear infinite;
 }
 
+@keyframes wave-fill {
+  0% {
+    transform: translateY(100%) scale(2);
+  }
+
+  100% {
+    transform: translateY(0) scale(2);
+  }
+}
+
+.btn-wave {
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.btn-wave::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: theme('colors.blue.600');
+  z-index: -1;
+  border-radius: 50%;
+  /* Curved start */
+  transform: translateY(100%) scale(2);
+  transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.btn-wave:active::after {
+  transform: translateY(0) scale(2);
+  transition: transform 0.4s ease-out;
+  /* Liquid snap */
+}
+
 @layer utilities {
   .text-hollow {
     -webkit-text-stroke: 1px white;
@@ -231,4 +268,76 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
 input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
   opacity: 1;
   filter: invert(1) drop-shadow(0 0 5px hsla(var(--primary), 0.5));
+}
+
+/* Gooey Button Styles */
+.c-button {
+  color: #000;
+  font-weight: 900;
+  font-size: 16px;
+  text-decoration: none;
+  padding: 0.9em 1.6em;
+  cursor: pointer;
+  display: inline-block;
+  vertical-align: middle;
+  position: relative;
+  z-index: 1;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.c-button--gooey {
+  color: theme('colors.primary');
+  border: none;
+  border-radius: 1rem;
+  position: relative;
+  transition: all 700ms ease;
+  background: rgba(99, 102, 241, 0.1);
+  /* Indigo 500 at 10% opacity */
+}
+
+.c-button--gooey .c-button__blobs {
+  height: 100%;
+  filter: url(#goo);
+  overflow: hidden;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: -3px;
+  right: -1px;
+  z-index: -1;
+  border-radius: 1rem;
+}
+
+.c-button--gooey .c-button__blobs div {
+  background-color: theme('colors.primary');
+  width: 34%;
+  height: 100%;
+  border-radius: 100%;
+  position: absolute;
+  transform: scale(1.4) translateY(125%) translateZ(0);
+  transition: all 700ms ease;
+}
+
+.c-button--gooey .c-button__blobs div:nth-child(1) {
+  left: -5%;
+}
+
+.c-button--gooey .c-button__blobs div:nth-child(2) {
+  left: 30%;
+  transition-delay: 60ms;
+}
+
+.c-button--gooey .c-button__blobs div:nth-child(3) {
+  left: 66%;
+  transition-delay: 25ms;
+}
+
+.c-button--gooey:hover {
+  color: #fff;
+}
+
+.c-button--gooey:hover .c-button__blobs div {
+  transform: scale(1.4) translateY(0) translateZ(0);
 }

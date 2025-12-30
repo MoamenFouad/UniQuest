@@ -1,15 +1,16 @@
 import { useState, useEffect } from "react"
-import { useParams, Link } from "react-router-dom"
+import { useParams, Link, useNavigate } from "react-router-dom"
 import api from "../api"
 import { useAuth } from "../context/AuthContext"
 import { useApp } from "../context/AppContext"
-import { Trophy, Calendar, Upload, CheckCircle, Zap, Shield, Plus, Target, ArrowRight, ChevronRight, Map, Mail } from "lucide-react"
+import { Trophy, Calendar, Upload, CheckCircle, Zap, Shield, Plus, Target, ArrowRight, ChevronRight, Map, Mail, LogOut } from "lucide-react"
 import { clsx } from "clsx"
 
 export function RoomDetails() {
     const { code } = useParams()
     const { user } = useAuth()
     const { refreshStats } = useApp()
+    const navigate = useNavigate()
     const [room, setRoom] = useState(null)
     const [tasks, setTasks] = useState([])
     const [leaderboard, setLeaderboard] = useState([])
@@ -63,6 +64,18 @@ export function RoomDetails() {
         } catch (err) { alert(err.response?.data?.detail || "Failed to create task") } finally { setCreating(false) }
     }
 
+    const handleLeaveRoom = async () => {
+        if (!confirm("Are you sure you want to leave this room? You will lose access to its content.")) return
+
+        try {
+            await api.post(`/rooms/${code}/leave`)
+            navigate("/rooms")
+            refreshStats()
+        } catch (err) {
+            alert(err.response?.data?.detail || "Failed to leave room")
+        }
+    }
+
     const handleFileUpload = async (taskId, file) => {
         if (!file) return
         setUploading(taskId)
@@ -103,7 +116,7 @@ export function RoomDetails() {
                             {room.name} <br />
                             <span className="bg-clip-text text-transparent bg-gradient-to-r from-secondary to-white">{room.course_code}</span>
                         </h1>
-                        <p className="text-white/40 text-xl md:text-3xl font-medium max-w-2xl italic leading-tight">
+                        <p className="text-white/60 text-xl md:text-3xl font-medium max-w-2xl italic leading-tight">
                             Strategic Command Interface for professional technical execution within the Origin Sector.
                         </p>
                     </div>
@@ -113,6 +126,14 @@ export function RoomDetails() {
                             <span className="text-[10px] font-black uppercase tracking-widest italic opacity-60">Admin Unit</span>
                         </div>
                     )}
+
+                    <button
+                        onClick={handleLeaveRoom}
+                        className="p-8 md:p-10 bg-red-500/10 border border-red-500/20 text-red-500 rounded-2xl md:rounded-[3rem] hover:bg-red-500 hover:text-white transition-all duration-300 flex flex-col items-center gap-4 shrink-0 group"
+                    >
+                        <LogOut size={40} md:size={48} className="group-hover:scale-110 transition-transform" />
+                        <span className="text-[10px] font-black uppercase tracking-widest italic opacity-60 group-hover:opacity-100">Leave Sector</span>
+                    </button>
                 </div>
             </header>
 
@@ -127,11 +148,11 @@ export function RoomDetails() {
                         onClick={() => setActiveTab(tab.id)}
                         className={clsx(
                             "flex-1 p-8 md:p-12 font-black uppercase text-[10px] md:text-xs italic tracking-[0.5em] transition-all flex items-center justify-center gap-4 md:gap-6 group relative overflow-hidden",
-                            activeTab === tab.id ? "bg-white text-black" : "text-white/40 hover:text-white"
+                            activeTab === tab.id ? "bg-white text-black" : "text-white/60 hover:text-white"
                         )}
                     >
                         {activeTab === tab.id && <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-secondary/10" />}
-                        <tab.icon size={20} md:size={24} className={clsx("relative z-10 transition-transform group-hover:scale-110", activeTab === tab.id ? "text-primary" : "text-white/20 group-hover:text-white")} />
+                        <tab.icon size={20} md:size={24} className={clsx("relative z-10 transition-transform group-hover:scale-110", activeTab === tab.id ? "text-primary" : "text-white/60 group-hover:text-white")} />
                         <span className="relative z-10">{tab.label}</span>
                     </button>
                 ))}
@@ -145,7 +166,7 @@ export function RoomDetails() {
                                 <div className="absolute inset-y-0 left-0 w-1 bg-primary scale-y-0 group-hover:scale-y-100 transition-transform duration-700" />
 
                                 <div className="flex-1 space-y-4 md:space-y-6">
-                                    <div className="flex items-center gap-4 md:gap-6 text-[9px] md:text-[10px] font-black uppercase tracking-[0.4em] opacity-40 group-hover:opacity-100 italic transition-all">
+                                    <div className="flex items-center gap-4 md:gap-6 text-[9px] md:text-[10px] font-black uppercase tracking-[0.4em] opacity-60 group-hover:opacity-100 italic transition-all">
                                         <span className="text-secondary group-hover:text-black">MISSION_{idx + 1}</span>
                                         <div className="h-[1px] w-6 md:w-8 bg-current" />
                                         <span>DIRECTIVE_{task.type}</span>
@@ -162,7 +183,7 @@ export function RoomDetails() {
                                             Verified Deployment
                                         </div>
                                     ) : task.is_expired ? (
-                                        <div className="flex items-center gap-3 md:gap-4 font-black italic uppercase text-[11px] md:text-[12px] tracking-widest text-white/40 group-hover:text-black">
+                                        <div className="flex items-center gap-3 md:gap-4 font-black italic uppercase text-[11px] md:text-[12px] tracking-widest text-white/60 group-hover:text-black">
                                             <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-black/10"><Zap size={20} md:size={24} /></div>
                                             Directive Expired
                                         </div>

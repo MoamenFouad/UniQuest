@@ -116,7 +116,7 @@ export function Dashboard() {
 
                 {/* SCROLL Indicator */}
                 <div className="scroll-indicator absolute bottom-16 left-1/2 -translate-x-1/2 flex flex-col items-center gap-6">
-                    <span className="text-[10px] font-black uppercase tracking-[0.5em] text-white/30 italic">Explore Platform</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.5em] text-white/60 italic">Explore Platform</span>
                     <div className="scroll-indicator-line" />
                 </div>
             </section>
@@ -127,7 +127,7 @@ export function Dashboard() {
                     {[...universityQuotes, ...universityQuotes].map((quote, i) => (
                         <div key={i} className="flex items-center gap-16">
                             <Zap className="text-primary/40" size={32} />
-                            <p className="text-5xl md:text-7xl font-black text-white italic uppercase tracking-tighter opacity-10 hover:opacity-100 transition-all cursor-default select-none hover:text-primary">
+                            <p className="text-5xl md:text-7xl font-black text-white/60 italic uppercase tracking-tighter transition-all cursor-default select-none hover:text-primary hover:opacity-100">
                                 {quote}
                             </p>
                         </div>
@@ -145,7 +145,7 @@ export function Dashboard() {
                             <span className="text-primary font-black uppercase tracking-[0.4em] text-[9px] md:text-[10px] italic">Identity Verified</span>
                         </div>
                         <h2 className="text-6xl md:text-8xl lg:text-[9rem] font-black text-white italic tracking-[calc(-0.06em)] leading-[0.8] uppercase">
-                            YOUR <br /> <span className="text-white/20">PROGRESS.</span>
+                            YOUR <br /> <span className="text-white/60">PROGRESS.</span>
                         </h2>
                     </div>
 
@@ -165,7 +165,7 @@ export function Dashboard() {
 
                         <div className="space-y-6 relative z-10">
                             <div className="flex justify-between items-end">
-                                <p className="text-[10px] font-black uppercase tracking-widest text-white/40">Current Level: <span className="text-white">{stats.level}</span></p>
+                                <p className="text-[10px] font-black uppercase tracking-widest text-white/60">Current Level: <span className="text-white">{stats.level}</span></p>
                                 <p className="text-4xl font-black italic text-white">{progressInLevel} <span className="text-xs text-primary/60 not-italic">/ 100 XP</span></p>
                             </div>
                             <div className="h-2 bg-white/5 rounded-full overflow-hidden">
@@ -181,14 +181,14 @@ export function Dashboard() {
                         <div className="minimal-card rounded-[1.5rem] md:rounded-[2.5rem] p-6 md:p-10 flex flex-col justify-between group hover:border-secondary/30 transition-all aspect-square">
                             <Flame className="text-secondary/20 group-hover:text-secondary group-hover:scale-110 transition-all" size={28} />
                             <div>
-                                <p className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-2">Study Streak</p>
+                                <p className="text-[10px] font-black uppercase tracking-widest text-white/60 mb-2">Study Streak</p>
                                 <p className="text-3xl md:text-5xl font-black text-white italic">{stats.streak} Days</p>
                             </div>
                         </div>
                         <div className="minimal-card rounded-[1.5rem] md:rounded-[2.5rem] p-6 md:p-10 flex flex-col justify-between group hover:border-primary/30 transition-all aspect-square">
                             <TrendingUp className="text-primary/20 group-hover:text-primary group-hover:scale-110 transition-all" size={28} />
                             <div>
-                                <p className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-2">Global Rank</p>
+                                <p className="text-[10px] font-black uppercase tracking-widest text-white/60 mb-2">Global Rank</p>
                                 <p className="text-3xl md:text-5xl font-black text-white italic">#{stats.rank || 'N/A'}</p>
                             </div>
                         </div>
@@ -232,10 +232,10 @@ export function Dashboard() {
             <section className="gsap-reveal max-w-[1800px] mx-auto p-8 md:p-24 lg:p-32 relative z-[10]">
                 <div className="flex flex-col md:flex-row items-end justify-between mb-12 md:mb-20 gap-8">
                     <h2 className="text-5xl md:text-7xl lg:text-[8rem] font-black text-white italic leading-[0.8] uppercase tracking-tighter">
-                        GLOBAL <br /> <span className="text-white/10 text-[4rem] md:text-[6rem] lg:text-[10rem]">RANKINGS.</span>
+                        GLOBAL <br /> <span className="text-white/60 text-[4rem] md:text-[6rem] lg:text-[10rem]">RANKINGS.</span>
                     </h2>
                     <Link to="/leaderboard" className="group">
-                        <span className="text-[10px] font-black uppercase tracking-[0.5em] text-white/40 group-hover:text-primary transition-colors flex items-center gap-4 italic mb-4">View Full Leaderboard <ArrowRight size={14} /></span>
+                        <span className="text-[10px] font-black uppercase tracking-[0.5em] text-white/60 group-hover:text-primary transition-colors flex items-center gap-4 italic mb-4">View Full Leaderboard <ArrowRight size={14} /></span>
                     </Link>
                 </div>
 
@@ -243,7 +243,7 @@ export function Dashboard() {
                     {topLeaderboard.map((entry, i) => (
                         <div key={i} className="flex items-center justify-between p-10 md:p-14 bg-black hover:bg-white/[0.03] transition-all group">
                             <div className="flex items-center gap-10">
-                                <span className="text-4xl font-black italic text-white/10 group-hover:text-secondary group-hover:translate-x-2 transition-all">0{i + 1}</span>
+                                <span className="text-4xl font-black italic text-white/60 group-hover:text-secondary group-hover:translate-x-2 transition-all">0{i + 1}</span>
                                 <div>
                                     <p className="text-3xl font-black text-white italic uppercase tracking-tighter">{entry.username}</p>
                                     <p className="text-[9px] font-black uppercase tracking-widest text-secondary mt-1">Verified Member</p>
@@ -251,7 +251,7 @@ export function Dashboard() {
                             </div>
                             <div className="text-right">
                                 <p className="text-4xl font-black italic text-white leading-none">{entry.total_xp}</p>
-                                <p className="text-[9px] font-black uppercase tracking-widest text-white/20 mt-2 italic">Points</p>
+                                <p className="text-[9px] font-black uppercase tracking-widest text-white/60 mt-2 italic">Points</p>
                             </div>
                         </div>
                     ))}
@@ -264,11 +264,11 @@ export function Dashboard() {
                     <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-primary/5 via-transparent to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
                     <div className="relative z-10 space-y-12">
                         <h2 className="text-8xl md:text-[12rem] font-black text-white italic leading-[0.8] tracking-[calc(-0.06em)] uppercase">
-                            ACHIEVE <br /> <span className="text-white/10">MORE.</span>
+                            ACHIEVE <br /> <span className="text-white/60">MORE.</span>
                         </h2>
                         <div className="max-w-3xl mx-auto">
-                            <p className="text-white/40 text-2xl md:text-3xl font-medium italic leading-tight mb-16">
-                                Join thousands of students mastering their academic journey. Your success starts here.
+                            <p className="text-white/60 text-2xl md:text-3xl font-medium italic leading-tight mb-16">
+                                Join or create a room with your friends and start winning.
                             </p>
                             <Link to="/rooms">
                                 <button className="px-20 py-10 bg-white text-black font-black uppercase tracking-[0.6em] text-xs italic rounded-full shadow-[0_0_80px_hsla(var(--primary),0.3)] hover:scale-105 active:scale-95 transition-all">
