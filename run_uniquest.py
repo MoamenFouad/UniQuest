@@ -47,10 +47,10 @@ def run():
     backend_dir = os.path.join(root, "backend")
     frontend_dir = os.path.join(root, "frontend")
 
-    # 1. Backend Start (Switching to 8002 for ultimate safety)
-    print("\n📡 Launching Backend (Port 8002)...")
+    # 1. Backend Start (Switching to 8005 for ultimate safety)
+    print("\n📡 Launching Backend (Port 8005)...")
     backend_proc = subprocess.Popen(
-        [os.path.join(backend_dir, "venv", "Scripts", "python.exe"), "-m", "uvicorn", "app.main:app", "--port", "8002"],
+        [os.path.join(backend_dir, "venv", "Scripts", "python.exe"), "-m", "uvicorn", "app.main:app", "--port", "8005", "--reload"],
         cwd=backend_dir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1
     )
     threading.Thread(target=drain_output, args=(backend_proc, "BACKEND :"), daemon=True).start()

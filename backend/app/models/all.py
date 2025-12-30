@@ -29,13 +29,15 @@ class Room(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String)
+    description = Column(String, nullable=True)
     code = Column(String, unique=True, index=True)
     admin_id = Column(Integer, ForeignKey("users.id"))
+    is_public = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     admin = relationship("User")
-    members = relationship("RoomMember", back_populates="room")
-    tasks = relationship("Task", back_populates="room")
+    members = relationship("RoomMember", back_populates="room", cascade="all, delete-orphan")
+    tasks = relationship("Task", back_populates="room", cascade="all, delete-orphan")
 
 class RoomMember(Base):
     __tablename__ = "room_members"
@@ -64,7 +66,7 @@ class Task(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     room = relationship("Room", back_populates="tasks")
-    submissions = relationship("Submission", back_populates="task")
+    submissions = relationship("Submission", back_populates="task", cascade="all, delete-orphan")
 
 class Submission(Base):
     __tablename__ = "submissions"
@@ -74,7 +76,8 @@ class Submission(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     file_path = Column(String)
     timestamp = Column(DateTime(timezone=True), server_default=func.now())
-    xp_awarded = Column(Integer)
+    xp_awarded = Column(Integer, default=0)
+    status = Column(String, default="pending") # "pending", "verified", "rejected"
 
     task = relationship("Task", back_populates="submissions")
     user = relationship("User", back_populates="submissions")

@@ -39,9 +39,16 @@ class UserResponse(UserBase):
 
 class RoomBase(BaseModel):
     name: str
+    description: Optional[str] = None
+    is_public: bool = True
 
 class RoomCreate(RoomBase):
     pass
+
+class RoomUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    is_public: Optional[bool] = None
 
 class RoomResponse(RoomBase):
     id: int
@@ -52,11 +59,30 @@ class RoomResponse(RoomBase):
     class Config:
         from_attributes = True
 
+class RoomMemberBase(BaseModel):
+    user_id: int
+    room_id: int
+    is_admin: bool
+
+class RoomMemberUpdate(BaseModel):
+    is_admin: bool
+
+class RoomMemberResponse(BaseModel):
+    id: int
+    user_id: int
+    room_id: int
+    is_admin: bool
+    username: str
+    email: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
 class TaskBase(BaseModel):
     title: str
     description: Optional[str] = None
     type: TaskType
-    xp_value: Optional[int] = None
+    xp_value: int = 0
 
 class TaskCreate(TaskBase):
     deadline: Optional[datetime] = None
@@ -83,6 +109,7 @@ class SubmissionResponse(BaseModel):
     user_id: int
     file_path: str
     xp_awarded: int
+    status: str
     timestamp: datetime
 
     class Config:

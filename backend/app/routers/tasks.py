@@ -23,10 +23,7 @@ def create_task(code: str, task_in: TaskCreate, user: User = Depends(get_current
     if not member or not member.is_admin:
         raise HTTPException(status_code=403, detail="Only admins can create tasks")
         
-    # Enforce XP values based on task type
-    xp_value = 50 if task_in.type == "lecture" else 25
-    
-    task = Task(**task_in.dict(exclude={'xp_value'}), room_id=room.id, xp_value=xp_value)
+    task = Task(**task_in.dict(), room_id=room.id)
     db.add(task)
     db.commit()
     db.refresh(task)
@@ -111,18 +108,58 @@ async def submit_task_nested(
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
         
-    # Enforce XP values based on task type
-    xp_awarded = 50 if task.type == "lecture" else 25
-    
     submission = Submission(
         task_id=task_id,
         user_id=user.id,
         file_path=filename,
-        xp_awarded=xp_awarded
+        xp_awarded=0,
+        status="pending"
     )
     
     db.add(submission)
     db.commit()
     db.refresh(submission)
     
+    return submission
+
+@router.get("/{task_id}/submissions", response_model=List[SubmissionResponse])
+def list_task_submissions(code: str, task_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    room = db.query(Room).filter(Room.code == code).first()
+    if not room:
+        raise HTTPException(status_code=404, detail="Room not found")
+        
+    member = db.query(RoomMember).filter(RoomMember.user_id == user.id, RoomMember.room_id == room.id).first()
+    if not member or not member.is_admin:
+        raise HTTPException(status_code=403, detail="Only admins can view submissions")
+        
+    submissions = db.query(Submission).filter(Submission.task_id == task_id).all()
+    return submissions
+
+@router.post("/{task_id}/submissions/{submission_id}/verify", response_model=SubmissionResponse)
+def verify_submission(code: str, task_id: int, submission_id: int, status: str = "verified", user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    room = db.query(Room).filter(Room.code == code).first()
+    if not room:
+        raise HTTPException(status_code=404, detail="Room not found")
+        
+    member = db.query(RoomMember).filter(RoomMember.user_id == user.id, RoomMember.room_id == room.id).first()
+    if not member or not member.is_admin:
+        raise HTTPException(status_code=403, detail="Only admins can verify submissions")
+        
+    submission = db.query(Submission).filter(Submission.id == submission_id, Submission.task_id == task_id).first()
+    if not submission:
+        raise HTTPException(status_code=404, detail="Submission not found")
+        
+    if status not in ["verified", "rejected"]:
+        raise HTTPException(status_code=400, detail="Invalid status")
+        
+    submission.status = status
+    if status == "verified":
+        # Award the XP specified in the task
+        task = db.query(Task).filter(Task.id == task_id).first()
+        submission.xp_awarded = task.xp_value or 0
+    else:
+        submission.xp_awarded = 0
+        
+    db.commit()
+    db.refresh(submission)
     return submission
