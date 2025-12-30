@@ -6,6 +6,7 @@ import { Dashboard } from "./pages/Dashboard"
 import { Rooms } from "./pages/Rooms"
 import { RoomDetails } from "./pages/RoomDetails"
 import { GlobalLeaderboard } from "./pages/GlobalLeaderboard"
+import ScrollToTop from "./components/ScrollToTop"
 
 function PrivateRoute({ children }) {
     const { user, loading } = useAuth()
@@ -34,6 +35,7 @@ export default function App() {
 
     return (
         <BrowserRouter>
+            <ScrollToTop />
             <Routes>
                 <Route path="/login" element={!user ? <Login /> : <Navigate to="/" />} />
 

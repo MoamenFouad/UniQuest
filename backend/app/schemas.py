@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, validator
 from typing import Optional, List
 from datetime import datetime
 from .models import TaskType
@@ -82,7 +82,7 @@ class TaskBase(BaseModel):
     title: str
     description: Optional[str] = None
     type: TaskType
-    xp_value: int = 0
+    xp_value: int = Field(default=0, ge=0, le=10000)
 
 class TaskCreate(TaskBase):
     deadline: Optional[datetime] = None
@@ -97,6 +97,7 @@ class TaskResponse(TaskBase):
     end_time: Optional[datetime]
     created_at: datetime
     is_submitted: bool = False
+    submission_status: Optional[str] = None
     is_expired: bool = False
     completed: bool = False # Frontend compatibility alias
 
@@ -118,7 +119,7 @@ class SubmissionResponse(BaseModel):
 class LeaderboardEntry(BaseModel):
     user_id: int
     username: str
-    email: str
+    email: Optional[str] = None
     total_xp: int
     rank: int
 

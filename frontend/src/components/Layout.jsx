@@ -169,7 +169,7 @@ export function Layout({ children }) {
                                 onClick={() => setIsSidebarOpen(false)}
                                 className="group flex flex-col items-start"
                             >
-                                <span className="text-[12px] font-black text-primary uppercase tracking-[0.5em] mb-2 italic opacity-40 group-hover:opacity-100 transition-opacity">0{idx + 1} System</span>
+                                <span className="text-[12px] font-black text-primary uppercase tracking-[0.5em] mb-2 italic opacity-40 group-hover:opacity-100 transition-opacity">0{idx + 1} Module</span>
                                 <span className="text-7xl md:text-8xl font-black italic uppercase tracking-[calc(-0.06em)] group-hover:translate-x-8 transition-all duration-700">
                                     {item.label}
                                 </span>
@@ -323,7 +323,7 @@ export function Layout({ children }) {
 
                         <div className="md:w-2/3 p-12 lg:p-20 overflow-y-auto custom-scrollbar">
                             <div className="flex justify-between items-center mb-16">
-                                <h3 className="text-3xl font-black italic uppercase italic tracking-tighter">Sync Integrity</h3>
+                                <h3 className="text-3xl font-black italic uppercase italic tracking-tighter">Profile Integrity</h3>
                                 <button onClick={() => setIsPrefsModalOpen(false)} className="p-4 rounded-2xl bg-white/5 hover:bg-red-500/10 text-white/40 hover:text-red-500 transition-all"><X size={24} /></button>
                             </div>
 
@@ -386,11 +386,11 @@ export function Layout({ children }) {
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     <div className="space-y-3">
-                                        <label className="text-[10px] font-black text-primary uppercase tracking-[0.4em] ml-2 italic">Operator Alias</label>
+                                        <label className="text-[10px] font-black text-primary uppercase tracking-[0.4em] ml-2 italic">Student Name</label>
                                         <input value={isEditing ? editData.username : user?.username} readOnly={!isEditing} onChange={(e) => setEditData({ ...editData, username: e.target.value })} className="w-full bg-white/5 border border-white/5 p-6 rounded-2xl text-white font-black italic uppercase text-sm focus:border-primary/50" />
                                     </div>
                                     <div className="space-y-3">
-                                        <label className="text-[10px] font-black text-primary uppercase tracking-[0.4em] ml-2 italic">Security Mail</label>
+                                        <label className="text-[10px] font-black text-primary uppercase tracking-[0.4em] ml-2 italic">Student Email</label>
                                         <input value={isEditing ? editData.email : user?.email} readOnly={!isEditing} onChange={(e) => setEditData({ ...editData, email: e.target.value })} className="w-full bg-white/5 border border-white/5 p-6 rounded-2xl text-white font-black italic uppercase text-sm focus:border-primary/50" />
                                     </div>
                                 </div>

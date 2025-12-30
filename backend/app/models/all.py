@@ -7,6 +7,11 @@ from ..database import Base
 class TaskType(str, enum.Enum):
     LECTURE = "lecture"
     ASSIGNMENT = "assignment"
+    PROJECT = "project"
+    QUIZ = "quiz"
+    LAB = "lab"
+    OTHER = "other"
+
 
 class User(Base):
     __tablename__ = "users"

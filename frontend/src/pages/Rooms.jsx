@@ -59,7 +59,7 @@ export function Rooms() {
                 <div className="absolute inset-0 border-t-2 border-primary rounded-full animate-spin" />
                 <Zap className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-primary animate-pulse" size={24} />
             </div>
-            <p className="text-primary font-black uppercase tracking-[0.6em] italic text-[10px]">Loading Group Data...</p>
+            <p className="text-primary font-black uppercase tracking-[0.6em] italic text-[10px]">Loading Room Data...</p>
         </div>
     )
 
@@ -94,16 +94,16 @@ export function Rooms() {
                 <div className="space-y-6">
                     <div className="flex items-center gap-4 md:gap-6">
                         <div className="h-[2px] w-12 md:w-24 bg-primary" />
-                        <span className="text-primary font-black uppercase tracking-[0.4em] text-[10px] italic">Active Group Directory</span>
+                        <span className="text-primary font-black uppercase tracking-[0.4em] text-[10px] italic">Active Room Directory</span>
                     </div>
                     <div>
-                        <h1 className="text-5xl md:text-7xl lg:text-[7rem] font-black text-white italic uppercase tracking-tighter leading-none mb-2">STUDY GROUPS</h1>
-                        <p className="text-white/60 text-sm md:text-base font-medium italic max-w-xl">Join a group or create your own study space within the global interface.</p>
+                        <h1 className="text-5xl md:text-7xl lg:text-[7rem] font-black text-white italic uppercase tracking-tighter leading-none mb-2">STUDY ROOMS</h1>
+                        <p className="text-white/60 text-sm md:text-base font-medium italic max-w-xl">Join a room or create your own study space within the global interface.</p>
                     </div>
                 </div>
                 <div className="flex gap-4 self-start sm:self-center">
-                    <GooeyButton onClick={() => setShowJoin(!showJoin)} className={clsx(showJoin && "opacity-50")}>Join Group</GooeyButton>
-                    <GooeyButton onClick={() => setShowCreate(!showCreate)} className={clsx(showCreate && "opacity-50")}>Create New Group</GooeyButton>
+                    <GooeyButton onClick={() => setShowJoin(!showJoin)} className={clsx(showJoin && "opacity-50")}>Join Room</GooeyButton>
+                    <GooeyButton onClick={() => setShowCreate(!showCreate)} className={clsx(showCreate && "opacity-50")}>Create New Room</GooeyButton>
                 </div>
             </div>
 
@@ -115,18 +115,18 @@ export function Rooms() {
                     </button>
                     <div className="max-w-4xl space-y-12">
                         <div>
-                            <h3 className="text-4xl md:text-6xl font-black text-white italic uppercase tracking-tighter mb-4">GROUP CREATION</h3>
-                            <p className="text-white/60 font-medium italic">Define the details of your new study group.</p>
+                            <h3 className="text-4xl md:text-6xl font-black text-white italic uppercase tracking-tighter mb-4">ROOM CREATION</h3>
+                            <p className="text-white/60 font-medium italic">Define the details of your new study room.</p>
                         </div>
 
                         <form onSubmit={handleCreate} className="space-y-8">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <div className="space-y-4">
-                                    <label className="text-[10px] font-black text-primary uppercase tracking-[0.4em] ml-2 italic">Group Name</label>
+                                    <label className="text-[10px] font-black text-primary uppercase tracking-[0.4em] ml-2 italic">Room Name</label>
                                     <input
                                         value={newRoom.name}
                                         onChange={(e) => setNewRoom({ ...newRoom, name: e.target.value })}
-                                        placeholder="Enter Group Name (e.g. CS101 Study Group)"
+                                        placeholder="Enter Room Name (e.g. CS101 Study Room)"
                                         required
                                         className="w-full bg-black/50 border border-white/10 text-white placeholder:text-white/20 text-xl p-6 rounded-2xl focus:border-primary transition-all font-black italic uppercase"
                                     />
@@ -136,7 +136,7 @@ export function Rooms() {
                                     <div className="bg-white/5 border border-white/10 p-6 rounded-2xl flex items-center justify-between">
                                         <div className="flex items-center gap-3">
                                             {newRoom.is_public ? <Globe size={18} className="text-secondary" /> : <Lock size={18} className="text-red-500" />}
-                                            <span className="text-sm font-black italic uppercase text-white">{newRoom.is_public ? "Public Access" : "Private Group"}</span>
+                                            <span className="text-sm font-black italic uppercase text-white">{newRoom.is_public ? "Public Access" : "Private Room"}</span>
                                         </div>
                                         <button
                                             type="button"
@@ -156,18 +156,18 @@ export function Rooms() {
                             </div>
 
                             <div className="space-y-4">
-                                <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.4em] ml-2 italic">Group Description</label>
+                                <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.4em] ml-2 italic">Room Description</label>
                                 <textarea
                                     value={newRoom.description}
                                     onChange={(e) => setNewRoom({ ...newRoom, description: e.target.value })}
-                                    placeholder="Describe the purpose and goals of this study group..."
+                                    placeholder="Describe the purpose and goals of this study room..."
                                     rows={3}
                                     className="w-full bg-black/50 border border-white/10 text-white placeholder:text-white/20 text-sm p-6 rounded-2xl focus:border-primary transition-all font-medium resize-none"
                                 />
                             </div>
 
                             <div className="pt-4">
-                                <GooeyButton type="submit" className="w-full sm:w-auto px-12 py-6 text-sm">Create Group</GooeyButton>
+                                <GooeyButton type="submit" className="w-full sm:w-auto px-12 py-6 text-sm">Create Room</GooeyButton>
                             </div>
                         </form>
                     </div>
@@ -187,11 +187,11 @@ export function Rooms() {
                         <input
                             value={joinCode}
                             onChange={(e) => setJoinCode(e.target.value)}
-                            placeholder="Enter Group Code (e.g. C7618AF4)"
+                            placeholder="Enter Room Code (e.g. C7618AF4)"
                             required
                             className="flex-1 bg-black/50 border border-secondary/20 text-white placeholder:text-secondary/30 text-lg p-6 rounded-2xl focus:border-secondary transition-all font-black italic uppercase"
                         />
-                        <GooeyButton type="submit" className="bg-secondary">Join Group</GooeyButton>
+                        <GooeyButton type="submit" className="bg-secondary">Join Room</GooeyButton>
                     </form>
                 </div>
             )}
@@ -231,7 +231,7 @@ export function Rooms() {
 
                             <div className="mt-auto pt-6 border-t border-white/5 group-hover:border-black/10 flex items-center justify-between relative z-10">
                                 <div className="flex items-center gap-3 text-primary group-hover:text-black text-[10px] font-black uppercase tracking-[0.2em] italic">
-                                    Enter Group <ArrowRight size={16} className="group-hover:translate-x-2 transition-transform" />
+                                    Enter Room <ArrowRight size={16} className="group-hover:translate-x-2 transition-transform" />
                                 </div>
                             </div>
                         </Card>
@@ -244,9 +244,9 @@ export function Rooms() {
                     <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-8 text-white/20">
                         <Plus size={48} />
                     </div>
-                    <h4 className="text-3xl font-black italic uppercase tracking-widest text-white mb-4">No Active Groups</h4>
-                    <p className="text-white/40 text-lg mb-12 max-w-md mx-auto italic font-medium">Your group directory is currently empty. Create a new group or join an existing one.</p>
-                    <GooeyButton onClick={() => setShowCreate(true)}>Create Group</GooeyButton>
+                    <h4 className="text-3xl font-black italic uppercase tracking-widest text-white mb-4">No Active Rooms</h4>
+                    <p className="text-white/40 text-lg mb-12 max-w-md mx-auto italic font-medium">Your room directory is currently empty. Create a new room or join an existing one.</p>
+                    <GooeyButton onClick={() => setShowCreate(true)}>Create Room</GooeyButton>
                 </div>
             )}
         </div>

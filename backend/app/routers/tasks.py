@@ -23,7 +23,13 @@ def create_task(code: str, task_in: TaskCreate, user: User = Depends(get_current
     if not member or not member.is_admin:
         raise HTTPException(status_code=403, detail="Only admins can create tasks")
         
-    task = Task(**task_in.dict(), room_id=room.id)
+    # Assign XP based on task type
+    xp_value = 100 if task_in.type == "lecture" else 75
+    
+    task_data = task_in.dict()
+    task_data['xp_value'] = xp_value
+    
+    task = Task(**task_data, room_id=room.id)
     db.add(task)
     db.commit()
     db.refresh(task)
@@ -40,8 +46,10 @@ def list_tasks(code: str, user: User = Depends(get_current_user), db: Session = 
     # Annotate tasks
     results = []
     for task in tasks:
-        # Check submission
-        is_submitted = any(s.user_id == user.id for s in task.submissions)
+        # Get user's submission for this task
+        submission = next((s for s in task.submissions if s.user_id == user.id), None)
+        is_submitted = submission is not None
+        submission_status = submission.status if submission else None
         
         # Check expiration (safe timezone comparison)
         is_expired = False
@@ -65,6 +73,7 @@ def list_tasks(code: str, user: User = Depends(get_current_user), db: Session = 
             end_time=task.end_time,
             created_at=task.created_at,
             is_submitted=is_submitted,
+            submission_status=submission_status,
             is_expired=is_expired,
             completed=is_submitted
         ))
@@ -163,3 +172,21 @@ def verify_submission(code: str, task_id: int, submission_id: int, status: str =
     db.commit()
     db.refresh(submission)
     return submission
+
+@router.delete("/{task_id}")
+def delete_task(code: str, task_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    room = db.query(Room).filter(Room.code == code).first()
+    if not room:
+        raise HTTPException(status_code=404, detail="Room not found")
+        
+    member = db.query(RoomMember).filter(RoomMember.user_id == user.id, RoomMember.room_id == room.id).first()
+    if not member or not member.is_admin:
+        raise HTTPException(status_code=403, detail="Only admins can delete tasks")
+        
+    task = db.query(Task).filter(Task.id == task_id, Task.room_id == room.id).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+        
+    db.delete(task)
+    db.commit()
+    return {"message": "Task deleted successfully"}
