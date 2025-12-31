@@ -1,4 +1,10 @@
-# 🎓 UniQuest: Use Your University Life
+# 🎓 UniQuest: Gamma Your University Life
+
+![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB)
+![Vite](https://img.shields.io/badge/vite-%23646CFF.svg?style=for-the-badge&logo=vite&logoColor=white)
+![TailwindCSS](https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)
+![SQLite](https://img.shields.io/badge/sqlite-%2307405e.svg?style=for-the-badge&logo=sqlite&logoColor=white)
 
 > **Turn your academic journey into an epic RPG adventure.**
 
@@ -34,16 +40,25 @@ UniQuest is a comprehensive gamified platform designed to transform standard uni
 
 ---
 
+## 📸 Screenshots
+
+| Dashboard | Room Details |
+|-----------|--------------|
+| *Overview of stats and leaderboard* | *Task management and active quests* |
+| ![Dashboard](docs/images/dashboard.png) | ![Room](docs/images/room_details.png) |
+
+---
+
 ## 🏗️ Technical Architecture
 
 UniQuest is built with a modern, decoupled architecture ensuring scalability and performance.
 
 ```mermaid
 graph TD
-    Client[Frontend (React + Vite)]
-    API[Backend (FastAPI)]
-    DB[(SQLite Database)]
-    Auth[Authentication Info]
+    Client["Frontend (React + Vite)"]
+    API["Backend (FastAPI)"]
+    DB[("SQLite Database")]
+    Auth["Authentication Info"]
 
     Client -- REST API (Axios) --> API
     API -- SQLAlchemy ORM --> DB
@@ -84,7 +99,10 @@ cd uniquest
 ```bash
 cd backend
 python3 -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
+# Activate Virtual Environment
+source venv/bin/activate  # macOS/Linux
+# venv\Scripts\activate   # Windows
+
 pip install -r requirements.txt
 ./run.sh
 ```
@@ -111,15 +129,6 @@ npm install
 1. **Build Command**: `npm run build`
 2. **Output Directory**: `dist`
 3. **Environment Variable**: Set `VITE_API_URL` to your production backend URL.
-
----
-
-## 📸 Screenshots
-
-| Dashboard | Room Details |
-|-----------|--------------|
-| *Overview of stats and leaderboard* | *Task management and active quests* |
-| ![Dashboard](backend/uploads/dashboard_placeholder.png) | ![Room](backend/uploads/room_placeholder.png) |
 
 ---
 
