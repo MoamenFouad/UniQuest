@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import List
-from datetime import datetime
+from datetime import datetime, timedelta
 import shutil
 import os
 import uuid
@@ -23,7 +23,19 @@ def create_task(code: str, task_in: TaskCreate, user: User = Depends(get_current
     if not member or not member.is_admin:
         raise HTTPException(status_code=403, detail="Only admins can create tasks")
         
-    # Assign XP based on task type
+    # Timezone Fix: Adjust times to compensate for UTC+2 offset (User reports times appear 2 hours earlier)
+    # Be robust against None values
+    from datetime import timedelta
+    
+    offset = timedelta(hours=2)
+    
+    if task_in.deadline:
+        task_in.deadline = task_in.deadline + offset
+    if task_in.start_time:
+        task_in.start_time = task_in.start_time + offset
+    if task_in.end_time:
+        task_in.end_time = task_in.end_time + offset
+        
     xp_value = 100 if task_in.type == "lecture" else 75
     
     task_data = task_in.dict()
@@ -56,8 +68,9 @@ def list_tasks(code: str, user: User = Depends(get_current_user), db: Session = 
         if task.deadline:
             # tasks.deadline is timezone aware (DateTime(timezone=True))
             # Compare with current UTC time
+            # Compare with current UTC time adjusted for the 2-hour offset applied at creation
             now = datetime.now(task.deadline.tzinfo) if task.deadline.tzinfo else datetime.utcnow()
-            if task.deadline < now:
+            if task.deadline < (now + timedelta(hours=2)):
                 is_expired = True
 
         # Create response object explictly to include annotated fields
@@ -104,7 +117,7 @@ async def submit_task_nested(
     # Check expiration
     if task.deadline:
         now = datetime.now(task.deadline.tzinfo) if task.deadline.tzinfo else datetime.utcnow()
-        if task.deadline < now:
+        if task.deadline < (now + timedelta(hours=2)):
             raise HTTPException(status_code=403, detail="Mission expired")
 
     # Save file
@@ -117,11 +130,14 @@ async def submit_task_nested(
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
         
+    # FIX: Use task XP value!
+    xp_awarded = task.xp_value if task.xp_value is not None else (100 if task.type == "lecture" else 75)
+        
     submission = Submission(
         task_id=task_id,
         user_id=user.id,
         file_path=filename,
-        xp_awarded=0,
+        xp_awarded=xp_awarded,
         status="pending"
     )
     

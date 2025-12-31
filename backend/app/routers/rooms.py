@@ -38,6 +38,7 @@ from ..schemas import RoomUpdate, RoomMemberResponse, RoomMemberUpdate
 
 @router.patch("/{code}", response_model=RoomResponse)
 def update_room(code: str, room_in: RoomUpdate, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    code = code.strip().upper()
     room = db.query(Room).filter(Room.code == code).first()
     if not room:
         raise HTTPException(status_code=404, detail="Room not found")
@@ -60,6 +61,7 @@ def update_room(code: str, room_in: RoomUpdate, user: User = Depends(get_current
 
 @router.delete("/{code}")
 def delete_room(code: str, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    code = code.strip().upper()
     room = db.query(Room).filter(Room.code == code).first()
     if not room:
         raise HTTPException(status_code=404, detail="Room not found")
@@ -75,6 +77,7 @@ def delete_room(code: str, user: User = Depends(get_current_user), db: Session =
 
 @router.get("/{code}/members", response_model=List[RoomMemberResponse])
 def get_room_members(code: str, db: Session = Depends(get_db)):
+    code = code.strip().upper()
     room = db.query(Room).filter(Room.code == code).first()
     if not room:
         raise HTTPException(status_code=404, detail="Room not found")
@@ -95,6 +98,7 @@ def get_room_members(code: str, db: Session = Depends(get_db)):
 
 @router.patch("/{code}/members/{user_id}/role", response_model=RoomMemberResponse)
 def update_member_role(code: str, user_id: int, role_in: RoomMemberUpdate, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    code = code.strip().upper()
     room = db.query(Room).filter(Room.code == code).first()
     if not room:
         raise HTTPException(status_code=404, detail="Room not found")
@@ -124,6 +128,7 @@ def update_member_role(code: str, user_id: int, role_in: RoomMemberUpdate, user:
 
 @router.post("/join")
 def join_room(code: str, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    code = code.strip().upper()
     room = db.query(Room).filter(Room.code == code).first()
     if not room:
         raise HTTPException(status_code=404, detail="Room not found")
@@ -139,6 +144,7 @@ def join_room(code: str, user: User = Depends(get_current_user), db: Session = D
 
 @router.post("/{code}/leave")
 def leave_room(code: str, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    code = code.strip().upper()
     room = db.query(Room).filter(Room.code == code).first()
     if not room:
         raise HTTPException(status_code=404, detail="Room not found")
@@ -157,6 +163,7 @@ def get_my_rooms(user: User = Depends(get_current_user), db: Session = Depends(g
 
 @router.get("/{code}/leaderboard", response_model=List[LeaderboardEntry])
 def get_leaderboard(code: str, db: Session = Depends(get_db)):
+    code = code.strip().upper()
     room = db.query(Room).filter(Room.code == code).first()
     if not room:
         raise HTTPException(status_code=404, detail="Room not found")
@@ -201,52 +208,52 @@ def get_leaderboard(code: str, db: Session = Depends(get_db)):
 @router.get("/global/leaderboard", response_model=List[LeaderboardEntry])
 def get_global_leaderboard(db: Session = Depends(get_db)):
     # Aggregate XP across all rooms
-    submissions = db.query(Submission).all()
+    # Must use SAME aggregation logic: Sum of Room XPs
     
-    # Calculate XP per user
-    user_xp = {}
+    # 1. Get all submissions join Task to get Room ID
+    all_subs_query = db.query(Submission, Task.room_id).join(Task, Submission.task_id == Task.id).all()
     
-    for s in submissions:
-        # We need to apply daily multipliers logic globally?
-        # The prompt says "Multiplier applies to total daily XP".
-        # If we just sum up everything, we might miss the daily grouping context if user submitted across different rooms.
-        # However, for MVP, we'll assume the same logic: group by user, then by day.
+    # 2. Build map: User -> Room -> Day -> List[Sub]
+    # user_room_day_map[uid][rid][date] = [subs...]
+    user_room_day_map = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+    
+    for sub, rid in all_subs_query:
+        d = sub.timestamp.date()
+        user_room_day_map[sub.user_id][rid][d].append(sub)
         
-        # Optimization: Query all users first?
-        # Let's iterate efficiently.
-        pass
-
-    # Better approach:
-    # 1. Fetch all users
-    # 2. For each user, fetch submissions
-    # 3. Calculate daily XP with multiplier
+    # 3. Calculate Scores
+    user_xp_map = defaultdict(int)
+    users_info = {} # quick lookup map
     
-    users = db.query(User).all()
+    # Get all user objects first to avoid N+1 if possible, or just query as needed
+    # Better: get distinct user IDs first
+    all_uids = list(user_room_day_map.keys())
+    if all_uids:
+        users = db.query(User).filter(User.id.in_(all_uids)).all()
+        for u in users:
+            users_info[u.id] = u
+    
+    for uid, rooms in user_room_day_map.items():
+        user_total = 0
+        for rid, days in rooms.items():
+            for d, subs in days.items():
+                base = sum((s.xp_awarded or 0) for s in subs)
+                mult = get_daily_multiplier(len(subs))
+                user_total += int(base * mult)
+        user_xp_map[uid] = user_total
+
     leaderboard = []
     
-    for user in users:
-        user_submissions = db.query(Submission).filter(Submission.user_id == user.id).all()
-        
-        total_xp = 0
-        submissions_by_day = {}
-        for s in user_submissions:
-            d = s.timestamp.date()
-            if d not in submissions_by_day:
-                submissions_by_day[d] = []
-            submissions_by_day[d].append(s)
-            
-        for d, subs in submissions_by_day.items():
-            daily_base = sum(s.xp_awarded for s in subs)
-            multiplier = get_daily_multiplier(len(subs))
-            total_xp += int(daily_base * multiplier)
-            
-        leaderboard.append(LeaderboardEntry(
-            user_id=user.id,
-            username=user.username,
-            email=user.email or "",
-            total_xp=total_xp,
-            rank=0
-        ))
+    for uid, total_xp in user_xp_map.items():
+        if uid in users_info:
+            user = users_info[uid]
+            leaderboard.append(LeaderboardEntry(
+                user_id=user.id,
+                username=user.username,
+                email=user.email or "",
+                total_xp=total_xp,
+                rank=0
+            ))
         
     leaderboard.sort(key=lambda x: x.total_xp, reverse=True)
     for i, entry in enumerate(leaderboard):
@@ -256,6 +263,7 @@ def get_global_leaderboard(db: Session = Depends(get_db)):
 
 @router.get("/{code}", response_model=RoomResponse)
 def get_room_details(code: str, db: Session = Depends(get_db)):
+    code = code.strip().upper()
     room = db.query(Room).filter(Room.code == code).first()
     if not room:
         raise HTTPException(status_code=404, detail="Room not found")

@@ -213,7 +213,7 @@ export function RoomDetails() {
             <div className="fixed inset-0 grid-overlay opacity-[0.05] pointer-events-none" />
 
             {/* Manage Room Button - Top Right (Admins Only) */}
-            {isAdmin && (
+            {isAdmin && !showSettingsModal && (
                 <div className="absolute top-8 right-8 md:top-12 md:right-12 z-50">
                     <button
                         onClick={() => setShowSettingsModal(true)}
@@ -230,6 +230,10 @@ export function RoomDetails() {
                 {/* Header Section (Compact) */}
                 <header className="space-y-4 text-left pt-6 md:pt-8 w-full">
                     <div className="space-y-2">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full border border-white/10 w-fit">
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/60">Room Code:</span>
+                            <span className="text-xs font-black uppercase tracking-widest text-primary select-all cursor-text" title="Click to copy">{room.code}</span>
+                        </div>
                         <h1 className="text-4xl md:text-6xl font-black text-white italic uppercase tracking-[calc(-0.04em)] leading-none">
                             {room.name}
                         </h1>
@@ -364,17 +368,7 @@ export function RoomDetails() {
                                         </div>
 
                                         <div className="flex justify-end pt-4 border-t border-dashed border-white/10 group-hover:border-black/10 gap-4">
-                                            {isAdmin && (
-                                                <button
-                                                    onClick={() => {
-                                                        setSelectedTask(task);
-                                                        setShowSubmissionsModal(true);
-                                                    }}
-                                                    className="px-6 py-3 bg-white/5 hover:bg-white text-white hover:text-black rounded-xl font-black italic text-[9px] uppercase tracking-[0.2em] transition-all border border-white/10"
-                                                >
-                                                    View Submissions
-                                                </button>
-                                            )}
+
                                             {task.submission_status === "verified" ? (
                                                 <div className="flex items-center gap-3 font-black italic uppercase text-[10px] tracking-widest text-primary group-hover:text-black">
                                                     <CheckCircle size={16} /> Verified

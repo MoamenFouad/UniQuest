@@ -24,24 +24,7 @@ def get_dashboard(user: User = Depends(get_current_user), db: Session = Depends(
         Submission.user_id == user.id
     ).order_by(Submission.timestamp).all()
     
-    # Calculate total XP with daily multipliers
-    total_xp = 0
-    submissions_by_day = defaultdict(list)
-    
-    for submission in user_submissions:
-        day = submission.timestamp.date()
-        submissions_by_day[day].append(submission)
-    
-    # Apply daily multipliers
-    xp_by_day_data = []
-    for day, subs in sorted(submissions_by_day.items()):
-        daily_base = sum((s.xp_awarded or 0) for s in subs)
-        multiplier = get_daily_multiplier(len(subs))
-        daily_total = int(daily_base * multiplier)
-        total_xp += daily_total
-        xp_by_day_data.append(DailyXP(date=day.isoformat(), xp=daily_total))
-    
-    # Calculate XP by room
+    # Calculate XP by room FIRST (this is the source of truth for multipliers)
     xp_by_room_data = []
     submissions_by_room = defaultdict(list)
     
@@ -49,11 +32,13 @@ def get_dashboard(user: User = Depends(get_current_user), db: Session = Depends(
         task = db.query(Task).filter(Task.id == submission.task_id).first()
         if task:
             submissions_by_room[task.room_id].append(submission)
+            
+    total_xp = 0 # This will be the sum of room XPs
     
     for room_id, room_subs in submissions_by_room.items():
         room = db.query(Room).filter(Room.id == room_id).first()
         if room:
-            # Calculate room XP with daily multipliers
+            # Calculate room XP with daily multipliers (Per Room Rule)
             room_subs_by_day = defaultdict(list)
             for sub in room_subs:
                 day = sub.timestamp.date()
@@ -65,28 +50,53 @@ def get_dashboard(user: User = Depends(get_current_user), db: Session = Depends(
                 multiplier = get_daily_multiplier(len(subs))
                 room_xp += int(daily_base * multiplier)
             
+            # Add to GLOBAL TOTAL
+            total_xp += room_xp
+            
             xp_by_room_data.append(RoomXP(
                 room_id=room.id,
                 room_name=room.name,
                 room_code=room.code,
                 xp=room_xp
             ))
+            
+    # Calculate daily breakdown for chart (Visualization only)
+    # We can still show "XP earned on Day X", but we should probably sum the Room-XP-contributions for that day?
+    # Or just show raw daily base * multiplier logic?
+    # To be consistent with total_xp, we really should sum "XP earned in Room A on Day X" + "XP earned in Room B on Day X".
     
+    xp_by_day_dict = defaultdict(int)
+    for room_id, room_subs in submissions_by_room.items():
+         room_subs_by_day = defaultdict(list)
+         for sub in room_subs:
+             day = sub.timestamp.date()
+             room_subs_by_day[day].append(sub)
+         
+         for day, subs in room_subs_by_day.items():
+             daily_base = sum(s.xp_awarded for s in subs)
+             multiplier = get_daily_multiplier(len(subs))
+             final_daily_room_xp = int(daily_base * multiplier)
+             xp_by_day_dict[day] += final_daily_room_xp
+
+    xp_by_day_data = [DailyXP(date=d.isoformat(), xp=xp) for d, xp in sorted(xp_by_day_dict.items())]
+
     # Calculate level (100 XP per level)
     level = (total_xp // 100) + 1
     
     # Calculate streak (consecutive days with submissions)
+    # Streak logic is loose (just checking for any submission)
     current_streak = 0
-    if submissions_by_day:
-        sorted_days = sorted(submissions_by_day.keys(), reverse=True)
+    if user_submissions:
+        # Group ANY submission by day for streak check
+        streak_days = sorted(list(set(s.timestamp.date() for s in user_submissions)), reverse=True)
         today = datetime.now().date()
-        
+               
         # Check if there's activity today or yesterday
-        if sorted_days[0] >= today - timedelta(days=1):
+        if streak_days[0] >= today - timedelta(days=1):
             current_streak = 1
-            prev_day = sorted_days[0]
+            prev_day = streak_days[0]
             
-            for day in sorted_days[1:]:
+            for day in streak_days[1:]:
                 if (prev_day - day).days == 1:
                     current_streak += 1
                     prev_day = day
@@ -96,7 +106,7 @@ def get_dashboard(user: User = Depends(get_current_user), db: Session = Depends(
     # Quests completed
     quests_completed = len(user_submissions)
     
-    # Recent activities (last 5 submissions)
+    # Recent activities
     recent_activities = []
     recent_subs = user_submissions[-5:][::-1]  # Last 5, reversed
     
@@ -113,28 +123,31 @@ def get_dashboard(user: User = Depends(get_current_user), db: Session = Depends(
             ))
     
     # Optimized Global Leaderboard (Top 10)
-    # Fetch all submissions to calculate XP globally
-    # In a real production app with millions of subs, we'd use a more specialized query or cached stats.
-    # For this project, fetching all subs is acceptable and much faster than N+1 queries.
+    # Must use SAME aggregation logic: Sum of Room XPs
     
-    all_submissions = db.query(Submission).order_by(Submission.user_id, Submission.timestamp).all()
-    user_xp_map = defaultdict(int)
-    user_subs_by_day = defaultdict(lambda: defaultdict(list))
+    # 1. Get all submissions join Task to get Room ID
+    all_subs_query = db.query(Submission, Task.room_id).join(Task, Submission.task_id == Task.id).all()
     
-    for sub in all_submissions:
-        day = sub.timestamp.date()
-        user_subs_by_day[sub.user_id][day].append(sub)
+    # 2. Build map: User -> Room -> Day -> List[Sub]
+    # user_room_day_map[uid][rid][date] = [subs...]
+    user_room_day_map = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
     
-    for user_id, days_map in user_subs_by_day.items():
-        total_u_xp = 0
-        for day, subs in days_map.items():
-            daily_base = sum((s.xp_awarded or 0) for s in subs)
-            multiplier = get_daily_multiplier(len(subs))
-            total_u_xp += int(daily_base * multiplier)
-        user_xp_map[user_id] = total_u_xp
+    for sub, rid in all_subs_query:
+        d = sub.timestamp.date()
+        user_room_day_map[sub.user_id][rid][d].append(sub)
         
+    # 3. Calculate Scores
+    user_xp_map = defaultdict(int)
+    for uid, rooms in user_room_day_map.items():
+        user_total = 0
+        for rid, days in rooms.items():
+            for d, subs in days.items():
+                base = sum((s.xp_awarded or 0) for s in subs)
+                mult = get_daily_multiplier(len(subs))
+                user_total += int(base * mult)
+        user_xp_map[uid] = user_total
+
     # Get user details for the top XP earners
-    # Limit to top 20 first to be safe, then sort and take top 10
     sorted_user_ids = sorted(user_xp_map.keys(), key=lambda uid: user_xp_map[uid], reverse=True)
     top_u_ids = sorted_user_ids[:10]
     
@@ -158,7 +171,8 @@ def get_dashboard(user: User = Depends(get_current_user), db: Session = Depends(
         # Find index in sorted list
         global_rank = sorted_user_ids.index(user.id) + 1
     else:
-        # If user has no submissions, they are at the end
+        # If user has no submissions/XP, check if they exist in sorted list (no)
+        # Rank is effectively "Last"
         global_rank = len(sorted_user_ids) + 1
     
     return DashboardResponse(

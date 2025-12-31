@@ -42,7 +42,15 @@ async def submit_task(
         shutil.copyfileobj(file.file, buffer)
         
     # Enforce XP values based on task type
-    xp_awarded = 50 if task.type == "lecture" else 25
+    # Enforce XP values based on task type
+    # Use the dynamic value from the task itself, which honors the 100/75 rule set at creation
+    with open("debug_xp.log", "a") as log:
+        log.write(f"DEBUG: Task ID: {task.id}, Task XP: {task.xp_value}, Type: {task.type}\n")
+    
+    xp_awarded = task.xp_value if task.xp_value is not None else (100 if task.type == "lecture" else 75)
+    
+    with open("debug_xp.log", "a") as log:
+        log.write(f"DEBUG: XP Awarded: {xp_awarded}\n")
     
     submission = Submission(
         task_id=task_id,
