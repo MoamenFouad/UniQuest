@@ -1,4 +1,4 @@
-# 🎓 UniQuest: Gamma Your University Life
+# 🎓 UniQuest: Spice Up Your University Life
 
 ![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB)
 ![Vite](https://img.shields.io/badge/vite-%23646CFF.svg?style=for-the-badge&logo=vite&logoColor=white)
@@ -125,7 +125,7 @@ npm install
 2. **Start Command**: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
 3. **Environment**: minimal setup required.
 
-### Frontend (Vercel/Netlify)
+### Frontend (Vercel/Railway)
 1. **Build Command**: `npm run build`
 2. **Output Directory**: `dist`
 3. **Environment Variable**: Set `VITE_API_URL` to your production backend URL.
@@ -140,8 +140,3 @@ npm install
 4. Push to the Branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
----
-
-## 📝 License
-
-Distributed under the MIT License. See `LICENSE` for more information.
